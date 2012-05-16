@@ -79,9 +79,9 @@ if cmd == 'list'
 elsif cmd == "create"
   cmd_opts = 
     Trollop::options do
-      opt :bug, "create a bug"
-      opt :improvement, "create an improvement"
-      opt :task, "create a task"
+      opt :bug, "create a bug", :short => 'b'
+      opt :improvement, "create an improvement", :short => 'i'
+      opt :task, "create a task", :short => 't'
     end
     
   title = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")

@@ -47,6 +47,10 @@ class Issue
     puts comment(@title)
     puts separator
   end
+
+  def format_list
+    puts "#{@id[0,6]} #{@title}"
+  end
     
 end
 
@@ -94,7 +98,8 @@ case cmd
     NewIssue = Issue.createNewIssue(title, type)
     Issues << NewIssue
   when "list"
-    Issues.each {|issue| puts issue.format_verbose if issue.status == 'open' }
+    list_proc = cmd_opts[:verbose] ? "format_verbose" : "format_list"
+    Issues.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
 end
 
 if cmd != "list"

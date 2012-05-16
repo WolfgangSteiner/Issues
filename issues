@@ -74,12 +74,14 @@ if cmd == 'list'
       opt :all, "list all issues"
       opt :newest, "list newest issues first"
       opt :oldest, "list oldest issues first"
+      opt :verbose, "verbose list of issues", :short => 'v'
     end
 elsif cmd == "create"
   cmd_opts = 
     Trollop::options do
       opt :bug, "create a bug"
       opt :improvement, "create an improvement"
+      opt :task, "create a task"
     end
     
   title = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
@@ -94,7 +96,7 @@ Issues = FileTest.exists?('issues.yaml') && YAML.load_file('issues.yaml') || []
 
 case cmd
   when "create"
-    type = cmd_opts[:improvement] ? "improvement" : "bug";
+    type = cmd_opts[:improvement] ? "improvement" : cmd_opts[:task] ? "task" : "bug";
     NewIssue = Issue.createNewIssue(title, type)
     Issues << NewIssue
   when "list"

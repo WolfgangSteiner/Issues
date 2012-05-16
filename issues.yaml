@@ -1,0 +1,13 @@
+--- 
+- !ruby/object:Issue 
+  date: 2012-05-16 16:14:54.738899 +02:00
+  id: 9b7d0b0004257329d1569901f7685e82
+  status: open
+  title: Implement resolve command.
+  type: improvement
+- !ruby/object:Issue 
+  date: 2012-05-16 16:15:10.418552 +02:00
+  id: 085dcebdd6ccb2aea5c2102422485c1e
+  status: open
+  title: Base id on md5 of date + title.
+  type: improvement

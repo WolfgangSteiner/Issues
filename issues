@@ -1,0 +1,106 @@
+#!/usr/bin/env ruby
+# encoding: utf-8 
+#======================================================================================================================#
+
+require 'rubygems'
+require 'SecureRandom'
+require 'trollop'
+require 'terminfo'
+require 'yaml'
+
+YAML::ENGINE.yamler = 'syck'
+
+#======================================================================================================================#
+
+def separator
+  termwidth = TermInfo.screen_size[1]
+  '#' + ('=' * (termwidth - 2)) + '#'
+end  
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+def comment(comment)
+  "\# #{comment}"
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+
+class Issue
+  attr_accessor :id, :date, :type, :title, :description, :status
+
+  def self.createNewIssue(title, type="bug")
+    newIssue = Issue.new
+    newIssue.id = "#{SecureRandom.hex.to_s}"
+    newIssue.date = Time.new
+    newIssue.title = title
+    newIssue.status = "open"
+    newIssue.type = type
+    newIssue
+  end
+  
+  def format_verbose
+    puts separator
+    puts comment("#{@id[0,6]} #{@date.to_s[0,10]} #{@type.capitalize} (#{@status})")
+    puts comment(@title)
+    puts separator
+  end
+    
+end
+
+
+#======================================================================================================================#
+# Command Line Parsing
+#======================================================================================================================#
+
+SUB_COMMANDS = %w(list create resolve)
+global_opts = Trollop::options do
+  banner "issue.rb: lightweight issue management"
+  opt :dry_run, "Don't actually do anything", :short => "-n"
+  stop_on SUB_COMMANDS
+end
+
+cmd = ARGV.shift # get the subcommand
+
+if cmd == 'list'
+  cmd_opts = 
+    Trollop::options do
+      opt :all, "list all issues"
+      opt :newest, "list newest issues first"
+      opt :oldest, "list oldest issues first"
+    end
+elsif cmd == "create"
+  cmd_opts = 
+    Trollop::options do
+      opt :bug, "create a bug"
+      opt :improvement, "create an improvement"
+    end
+    
+  title = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
+else
+  Trollop::die "unknown surm bcommand #{cmd.inspect}"
+end
+
+
+#======================================================================================================================#
+
+Issues = FileTest.exists?('issues.yaml') && YAML.load_file('issues.yaml') || []
+
+case cmd
+  when "create"
+    type = cmd_opts[:improvement] ? "improvement" : "bug";
+    NewIssue = Issue.createNewIssue(title, type)
+    Issues << NewIssue
+  when "list"
+    Issues.each {|issue| puts issue.format_verbose if issue.status == 'open' }
+end
+
+if cmd != "list"
+  File.open( 'issues.yaml', 'w' ) { |out| YAML.dump(Issues, out) }
+end
+
+
+#======================================================================================================================#
+

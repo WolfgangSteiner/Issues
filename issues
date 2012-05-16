@@ -59,12 +59,16 @@ end
 # Command Line Parsing
 #======================================================================================================================#
 
+EXECUTABLE_NAME=File.basename($0)
+DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
+
 SUB_COMMANDS = %w(list create resolve)
 global_opts = Trollop::options do
   banner "issue.rb: lightweight issue management"
   opt :dry_run, "Don't actually do anything", :short => "-n"
   stop_on SUB_COMMANDS
 end
+
 
 cmd = ARGV.shift # get the subcommand
 
@@ -92,7 +96,7 @@ end
 
 #======================================================================================================================#
 
-Issues = FileTest.exists?('issues.yaml') && YAML.load_file('issues.yaml') || []
+Issues = FileTest.exists?(DATABASE_NAME) && YAML.load_file(DATABASE_NAME) || []
 
 case cmd
   when "create"
@@ -105,7 +109,8 @@ case cmd
 end
 
 if cmd != "list"
-  File.open( 'issues.yaml', 'w' ) { |out| YAML.dump(Issues, out) }
+  FileTest.exists?('.issues') || Dir.mkdir('.issues')
+  File.open(DATABASE_NAME, 'w' ) { |out| YAML.dump(Issues, out) }
 end
 
 

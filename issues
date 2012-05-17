@@ -51,7 +51,51 @@ class Issue
   def format_list
     puts "#{@id[0,6]} #{@title}"
   end
+  
+  def short_id
+    @id[0,6]
+  end
     
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+def create_issue(opts, issues)
+  type = opts[:improvement] ? "improvement" : opts[:task] ? "task" : "bug"
+  new_issue = Issue.createNewIssue(opts[:title], type)
+  issues << new_issue
+  
+  puts "Created issue #{new_issue.short_id} #{new_issue.title}"
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+def list_issues(opts, issues)
+  list_proc = opts[:verbose] ? "format_verbose" : "format_list"
+  issues.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+def resolve_issues(opts, issues)
+  find_issue = lambda {|i| i.id.start_with?(opts[:issue_id]) && i.status == "open"}
+  
+  num_issues = issues.count(&find_issue)
+  if num_issues == 1
+    issue_index = issues.index(&find_issue)
+    resolved_issue = issues[issue_index]
+    resolved_issue.status = "resolved"
+    puts "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
+  elsif num_issues > 1
+    puts "Found more than one open issues that match id #{opts[:issue_id]}:"
+    issues.each{|i| find_issue.call(i) && puts("#{i.id} #{i.title}")}
+    exit
+  else
+    puts "Error: No open issue found with id #{opts[:issue_id]}"
+  end
 end
 
 
@@ -71,6 +115,7 @@ end
 
 
 cmd = ARGV.shift # get the subcommand
+cmd_opts = {}
 
 if cmd == 'list'
   cmd_opts = 
@@ -87,25 +132,28 @@ elsif cmd == "create"
       opt :improvement, "create an improvement", :short => 'i'
       opt :task, "create a task", :short => 't'
     end
+  cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
+elsif cmd == "resolve"
+  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
     
-  title = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 else
-  Trollop::die "unknown surm bcommand #{cmd.inspect}"
+  Trollop::die "unknown command #{cmd.inspect}"
 end
 
 
+#======================================================================================================================#
+#                                                         Main
 #======================================================================================================================#
 
 Issues = FileTest.exists?(DATABASE_NAME) && YAML.load_file(DATABASE_NAME) || []
 
 case cmd
-  when "create"
-    type = cmd_opts[:improvement] ? "improvement" : cmd_opts[:task] ? "task" : "bug";
-    NewIssue = Issue.createNewIssue(title, type)
-    Issues << NewIssue
-  when "list"
-    list_proc = cmd_opts[:verbose] ? "format_verbose" : "format_list"
-    Issues.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
+  when "create" 
+    create_issue(cmd_opts, Issues)
+  when "list" 
+    list_issues(cmd_opts, Issues)
+  when "resolve" 
+    resolve_issues(cmd_opts, Issues)
 end
 
 if cmd != "list"

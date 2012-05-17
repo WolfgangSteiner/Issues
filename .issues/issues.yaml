@@ -2,7 +2,7 @@
 - !ruby/object:Issue 
   date: 2012-05-16 16:14:54.738899 +02:00
   id: 9b7d0b0004257329d1569901f7685e82
-  status: open
+  status: resolved
   title: Implement resolve command.
   type: improvement
 - !ruby/object:Issue 
@@ -47,3 +47,9 @@
   status: open
   title: Implement sorting by newest, oldest
   type: improvement
+- !ruby/object:Issue 
+  date: 2012-05-17 11:15:44.478374 +02:00
+  id: 75871a4a26fd77d822fd844c4a65ceac
+  status: resolved
+  title: This is a resolve test
+  type: bug

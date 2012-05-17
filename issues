@@ -3,6 +3,7 @@
 #======================================================================================================================#
 
 require 'rubygems'
+require 'fattr'
 require 'SecureRandom'
 require 'trollop'
 require 'terminfo'
@@ -49,7 +50,7 @@ end
 #======================================================================================================================#
 
 class Issue
-  attr_accessor :id, :date, :type, :title, :description, :status
+  fattr :id, :date, :type, :title, :description, :status
 
 
 #----------------------------------------------------------------------------------------------------------------------#  
@@ -65,6 +66,14 @@ class Issue
   end
 
 
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def copy_from(a_issue)
+    self.class.fattrs.each do |a|
+      self.send(a, a_issue.send(a).dup)
+    end
+  end  
+      
 #----------------------------------------------------------------------------------------------------------------------#  
   
   def format_title(prefix, only_first_line_prefix=false, suffix='')
@@ -110,20 +119,17 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#
 
   def format_list
-    puts format_title(short_id, true)
+    puts format_title("#{short_id} (#{@type[0,1].capitalize})", true)
   end
 
 
 #----------------------------------------------------------------------------------------------------------------------#  
 
   def edit_description
-    puts "Editing description."
     file = Tempfile.new('issues')
     file.write(@description)
     file.close
     system("$EDITOR #{file.path}")
-
-    puts "Editing has ended."
 
     file.open
     new_description = file.read
@@ -141,9 +147,6 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#  
 
   def edit_all
-    puts "edit_all not yet implemented correctly"
-    exit
-    
     edit_file = file = Tempfile.new('issues')
     file.write(self.to_yaml)
     file.close
@@ -154,7 +157,7 @@ class Issue
     
     if (file.read != self.to_yaml)
       new_issue = YAML::load_file(file.path)
-      ##TODO: copy all attributes from edited issue to self.  
+      self.copy_from(new_issue)
       return true
     end 
     

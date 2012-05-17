@@ -74,3 +74,45 @@
   status: open
   title: Implement update type command
   type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:39:31.657665000 +02:00
+  id: 9e0ad75839678ada0e8e6c3fd28327e7
+  status: resolved
+  title: Fix editing of whole issues.
+  type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:40:06.157956000 +02:00
+  id: d10ef9318a65766b4968ba5b7b4e1e64
+  status: open
+  title: Implement listing of a single issue.
+  type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:40:34.505065000 +02:00
+  id: ca324bc98157f74ab3b86a73fab8494c
+  status: open
+  title: Implement of wontfix
+  type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:45:04.495833000 +02:00
+  id: affeee54f97acf2cf5cbd25ce20365c9
+  status: resolved
+  title: List issue type in short list
+  type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:55:19.192591000 +02:00
+  id: 1f575e9c614ba00e28fbac0bdbc801ac
+  status: open
+  title: Create priorities
+  type: improvement
+- !ruby/object:Issue
+  date: 2012-05-17 19:57:19.996550000 +02:00
+  id: fcacc96ed5ed3926a874ef3f86d7b6af
+  status: open
+  title: Implement guessing of issue type
+  type: bug
+- !ruby/object:Issue
+  date: 2012-05-17 19:58:31.561250000 +02:00
+  id: 0051cad4deea412629d5df10b55f3287
+  status: open
+  title: Implement entering description on command line.
+  type: improvement

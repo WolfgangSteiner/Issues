@@ -104,13 +104,23 @@ class Issue
 end
 
 
+#======================================================================================================================#
+#                                                   Main Program Logic
+#======================================================================================================================#
+
+def save_db(issues)
+  FileTest.exists?('.issues') || Dir.mkdir('.issues')
+  File.open(DATABASE_NAME, 'w' ) { |out| YAML.dump(issues, out) }
+end
+  
+
 #----------------------------------------------------------------------------------------------------------------------#
 
 def create_issue(opts, issues)
   type = opts[:improvement] ? "improvement" : opts[:task] ? "task" : "bug"
   new_issue = Issue.createNewIssue(opts[:title], type)
   issues << new_issue
-  
+  save_db(issues)  
   puts "Created issue #{new_issue.short_id} #{new_issue.title}"
 end
 
@@ -133,7 +143,9 @@ def resolve_issues(opts, issues)
     issue_index = issues.index(&find_issue)
     resolved_issue = issues[issue_index]
     resolved_issue.status = "resolved"
-    puts "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
+    message = "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
+    save_db(issues)
+    opts[:commit] && exec("git commit -a -m \"#{message}\"")
   elsif num_issues > 1
     puts "Found more than one open issues that match id #{opts[:issue_id]}:"
     issues.each{|i| find_issue.call(i) && puts("#{i.id} #{i.title}")}
@@ -182,6 +194,10 @@ elsif cmd == "create"
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 elsif cmd == "resolve"
+  cmd_opts = 
+    Trollop::options do
+      opt :commit, "do a git commit", :short => 'c'
+    end  
   cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
     
 else
@@ -202,12 +218,6 @@ case cmd
     list_issues(cmd_opts, Issues)
   when "resolve" 
     resolve_issues(cmd_opts, Issues)
-end
-
-
-if cmd != "list"
-  FileTest.exists?('.issues') || Dir.mkdir('.issues')
-  File.open(DATABASE_NAME, 'w' ) { |out| YAML.dump(Issues, out) }
 end
 
 

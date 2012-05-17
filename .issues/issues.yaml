@@ -59,3 +59,21 @@
   status: open
   title: This is a very long title. This is a very long title. This is a very long title. This is a very long title. This is a very long title. This is a very long title. TITLE END.
   type: bug
+- !ruby/object:Issue 
+  date: 2012-05-17 14:06:48.701709 +02:00
+  id: 335126fd01c80308966415985f033382
+  status: open
+  title: This is another test.
+  type: bug
+- !ruby/object:Issue 
+  date: 2012-05-17 14:21:17.936425 +02:00
+  id: d1394aa65e766e0088eacd632f65d68a
+  status: open
+  title: This is yet another test issue.
+  type: bug
+- !ruby/object:Issue 
+  date: 2012-05-17 14:24:49.389268 +02:00
+  id: 81b9e30a9a1e7d5a4f813fb050735651
+  status: resolved
+  title: Add option --commit to resolve command.
+  type: bug

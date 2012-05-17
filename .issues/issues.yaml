@@ -32,9 +32,12 @@
 - !ruby/object:Issue
   date: 2012-05-16 16:55:01.914550000 +02:00
   id: b51b6c22af1e50be0d5d32c3666ef98e
-  status: open
+  status: resolved
   title: Implement adding of description.
   type: improvement
+  description: ! 'This is my first description ever!
+
+'
 - !ruby/object:Issue
   date: 2012-05-16 16:55:26.625241000 +02:00
   id: adf8b59e50c2f477c335b8476d108fa7

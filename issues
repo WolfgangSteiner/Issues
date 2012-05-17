@@ -6,8 +6,10 @@ require 'rubygems'
 require 'SecureRandom'
 require 'trollop'
 require 'terminfo'
+require 'tempfile'
 require 'yaml'
 
+#YAML::ENGINE.yamler = 'psych'
 
 #======================================================================================================================#
 
@@ -18,8 +20,15 @@ end
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-def separator
-  '#' + ('=' * (terminal_width - 2)) + '#'
+def separator(char='=')
+  '#' + (char * (terminal_width - 2)) + '#'
+end  
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+def small_separator
+  separator ('-')
 end  
 
 
@@ -84,7 +93,18 @@ class Issue
     puts separator
     puts comment("#{@id[0,6]} #{@date.to_s[0,10]} #{@type.capitalize} (#{@status})")
     puts format_title("#", false, "#")
+    
+    if @description
+      puts small_separator
+      
+      @description.split("\n").each do |l|
+        puts pad_string("# #{l}", "#", terminal_width)
+      end
+    end
+    
     puts separator
+    puts
+    puts
   end
 
 #----------------------------------------------------------------------------------------------------------------------#
@@ -93,6 +113,53 @@ class Issue
     puts format_title(short_id, true)
   end
 
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def edit_description
+    puts "Editing description."
+    file = Tempfile.new('issues')
+    file.write(@description)
+    file.close
+    system("$EDITOR #{file.path}")
+
+    puts "Editing has ended."
+
+    file.open
+    new_description = file.read
+
+    puts new_description
+
+    if new_description != @description
+      @description = new_description.dup
+      return true
+    end
+    
+    return false
+  end
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def edit_all
+    puts "edit_all not yet implemented correctly"
+    exit
+    
+    edit_file = file = Tempfile.new('issues')
+    file.write(self.to_yaml)
+    file.close
+    
+    system("$EDITOR #{file.path}")
+
+    file.open
+    
+    if (file.read != self.to_yaml)
+      new_issue = YAML::load_file(file.path)
+      ##TODO: copy all attributes from edited issue to self.  
+      return true
+    end 
+    
+    return false
+  end
 
 #----------------------------------------------------------------------------------------------------------------------#  
 
@@ -166,6 +233,23 @@ def resolve_issues(opts, issues)
 end
 
 
+#----------------------------------------------------------------------------------------------------------------------#
+
+def edit_issue(opts, issues)
+  issue = select_issue(issues, opts[:issue_id])
+  
+  did_change_issue = false
+  
+  if (opts[:description])
+    did_change_issue = issue.edit_description
+  else
+    did_change_issue = issue.edit_all
+  end
+   
+  did_change_issue && save_db(issues)
+end
+
+
 #======================================================================================================================#
 # Command Line Parsing
 #======================================================================================================================#
@@ -173,7 +257,7 @@ end
 EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
-SUB_COMMANDS = %w(list create resolve)
+SUB_COMMANDS = %w(list create resolve edit)
 global_opts = Trollop::options do
   banner "issue.rb: lightweight issue management"
   opt :dry_run, "Don't actually do anything", :short => "-n"
@@ -208,8 +292,14 @@ elsif cmd == "resolve"
     Trollop::options do
       opt :commit, "do a git commit", :short => 'c'
     end  
-  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
-    
+  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
+elsif cmd == "edit"
+  cmd_opts = 
+    Trollop::options do
+      opt :description, "edit the issue description", :short => 'd'
+      opt :todos, "edit the issue todo list", :short => 't'
+    end      
+  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
@@ -228,6 +318,8 @@ case cmd
     list_issues(cmd_opts, Issues)
   when "resolve" 
     resolve_issues(cmd_opts, Issues)
+  when "edit"
+    edit_issue(cmd_opts, Issues)
 end
 
 

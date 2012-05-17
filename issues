@@ -8,7 +8,6 @@ require 'trollop'
 require 'terminfo'
 require 'yaml'
 
-YAML::ENGINE.yamler = 'syck'
 
 #======================================================================================================================#
 
@@ -48,7 +47,7 @@ class Issue
 
   def self.createNewIssue(title, type="bug")
     newIssue = Issue.new
-    newIssue.id = "#{SecureRandom.hex.to_s}"
+    newIssue.id = SecureRandom.hex.force_encoding("UTF-8")
     newIssue.date = Time.new
     newIssue.title = title
     newIssue.status = "open"

@@ -12,24 +12,39 @@ YAML::ENGINE.yamler = 'syck'
 
 #======================================================================================================================#
 
+def terminal_width
+  TermInfo.screen_size[1]
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
 def separator
-  termwidth = TermInfo.screen_size[1]
-  '#' + ('=' * (termwidth - 2)) + '#'
+  '#' + ('=' * (terminal_width - 2)) + '#'
 end  
 
 
 #----------------------------------------------------------------------------------------------------------------------#
 
 def comment(comment)
-  "\# #{comment}"
+  pad_string("\# #{comment}", "#", terminal_width)
 end
 
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+def pad_string(a_string, a_suffix, a_width)
+  a_suffix.length ? a_string + " " * (a_width - a_string.length - a_suffix.length) + a_suffix : a_string.dup
+end
+
+
+#======================================================================================================================#
 
 class Issue
   attr_accessor :id, :date, :type, :title, :description, :status
+
+
+#----------------------------------------------------------------------------------------------------------------------#  
 
   def self.createNewIssue(title, type="bug")
     newIssue = Issue.new
@@ -40,18 +55,48 @@ class Issue
     newIssue.type = type
     newIssue
   end
+
+
+#----------------------------------------------------------------------------------------------------------------------#  
+  
+  def format_title(prefix, only_first_line_prefix=false, suffix='')
+    the_suffix = suffix.length ? " " + suffix : ""
+    text_width = terminal_width - 1 - the_suffix.length
+    title_array = @title.split(" ")
+    result = []
+    current_line = prefix.dup
+    current_prefix = only_first_line_prefix && " " * prefix.length || prefix.dup
+    
+    title_array.each do |w|
+      (current_line.length + w.length + 1 > text_width) \
+        && result << pad_string(current_line, suffix, terminal_width) \
+        && current_line = current_prefix.dup
+      current_line << " " << w
+    end
+    
+    current_line.length > current_prefix.length && result << pad_string(current_line, suffix, terminal_width)
+    result.join("\n")
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#  
   
   def format_verbose
     puts separator
     puts comment("#{@id[0,6]} #{@date.to_s[0,10]} #{@type.capitalize} (#{@status})")
-    puts comment(@title)
+    puts format_title("#", false, "#")
     puts separator
   end
 
+#----------------------------------------------------------------------------------------------------------------------#
+
   def format_list
-    puts "#{@id[0,6]} #{@title}"
+    puts format_title(short_id, true)
   end
-  
+
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
   def short_id
     @id[0,6]
   end

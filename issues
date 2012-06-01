@@ -70,7 +70,7 @@ class Issue
 
   def copy_from(a_issue)
     self.class.fattrs.each do |a|
-      self.send(a, a_issue.send(a).dup)
+      a_issue.send(a) && self.send(a, a_issue.send(a).dup)
     end
   end  
       
@@ -115,6 +115,7 @@ class Issue
     puts
     puts
   end
+
 
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -163,6 +164,7 @@ class Issue
     
     return false
   end
+
 
 #----------------------------------------------------------------------------------------------------------------------#  
 

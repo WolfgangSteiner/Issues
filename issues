@@ -179,79 +179,96 @@ end
 #                                                   Main Program Logic
 #======================================================================================================================#
 
-def select_issue(issues, issue_id)
-  find_issue = lambda {|i| i.id.start_with?(issue_id) && i.status == "open"}
+class IssuesDb
+  fattr :issues_array
   
-  num_issues = issues.count(&find_issue)
-  if num_issues == 1
-    issue_index = issues.index(&find_issue)
-    return issues[issue_index]
+#----------------------------------------------------------------------------------------------------------------------#
 
-  elsif num_issues > 1
-    puts "Found more than one open issues that match id #{issue_id}:"
-    issues.each{|i| find_issue.call(i) && puts("#{i.id} #{i.title}")}
-    exit
+  def initialize(database_file)
+    @database_file = database_file
+    @issues_array = FileTest.exists?(database_file) && YAML.load_file(database_file) || []
+  end
+  
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def select_issue(issue_id)
+    find_issue = lambda {|i| i.id.start_with?(issue_id) && i.status == "open"}
+  
+    num_issues = @issues_array.count(&find_issue)
+    if num_issues == 1
+      issue_index = @issues_array.index(&find_issue)
+      return @issues_array[issue_index]
+
+    elsif num_issues > 1
+      puts "Found more than one open issues that match id #{issue_id}:"
+      @issues_array.each{|i| find_issue.call(i) && puts("#{i.id} #{i.title}")}
+      exit
     
-  else
-    puts "Error: No open issue found with id #{issue_id}"
+    else
+      puts "Error: No open issue found with id #{issue_id}"
+    end
+
+    nil
+  end  
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def save_db()
+    FileTest.exists?('.issues') || Dir.mkdir('.issues')
+    File.open(@database_file, 'w' ) { |out| YAML.dump(@issues_array, out) }
+  end
+  
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def create_issue(opts)
+    type = opts[:improvement] ? "improvement" : opts[:task] ? "task" : "bug"
+    new_issue = Issue.createNewIssue(opts[:title], type)
+    @issues_array << new_issue
+    save_db()  
+    puts "Created issue #{new_issue.short_id} #{new_issue.title}"
   end
 
-  nil
-end  
-
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-def save_db(issues)
-  FileTest.exists?('.issues') || Dir.mkdir('.issues')
-  File.open(DATABASE_NAME, 'w' ) { |out| YAML.dump(issues, out) }
-end
-  
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-def create_issue(opts, issues)
-  type = opts[:improvement] ? "improvement" : opts[:task] ? "task" : "bug"
-  new_issue = Issue.createNewIssue(opts[:title], type)
-  issues << new_issue
-  save_db(issues)  
-  puts "Created issue #{new_issue.short_id} #{new_issue.title}"
-end
-
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-def list_issues(opts, issues)
-  list_proc = opts[:verbose] ? "format_verbose" : "format_list"
-  issues.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
-end
-
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-def resolve_issues(opts, issues)
-  resolved_issue = select_issue(issues, opts[:issue_id])
-  resolved_issue.status = "resolved"
-  message = "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
-  save_db(issues)
-  opts[:commit] && exec("git commit -a -m \"#{message}\"")
-end
-
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-def edit_issue(opts, issues)
-  issue = select_issue(issues, opts[:issue_id])
-  
-  did_change_issue = false
-  
-  if (opts[:description])
-    did_change_issue = issue.edit_description
-  else
-    did_change_issue = issue.edit_all
+  def list_issues(opts)
+    list_proc = opts[:verbose] ? "format_verbose" : "format_list"
+    @issues_array.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
   end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def resolve_issues(opts)
+    resolved_issue = select_issue(opts[:issue_id])
+    resolved_issue.status = "resolved"
+    message = "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
+    save_db()
+    opts[:commit] && exec("git commit -a -m \"#{message}\"")
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def edit_issue(opts)
+    issue = select_issue(opts[:issue_id])
+  
+    did_change_issue = false
+  
+    if (opts[:description])
+      did_change_issue = issue.edit_description
+    else
+      did_change_issue = issue.edit_all
+    end
    
-  did_change_issue && save_db(issues)
+    did_change_issue && save_db()
+  end
+
+#----------------------------------------------------------------------------------------------------------------------#
+
 end
 
 
@@ -314,17 +331,17 @@ end
 #                                                         Main
 #======================================================================================================================#
 
-Issues = FileTest.exists?(DATABASE_NAME) && YAML.load_file(DATABASE_NAME) || []
+Issues = IssuesDb.new(DATABASE_NAME)
 
 case cmd
   when "create" 
-    create_issue(cmd_opts, Issues)
+    Issues.create_issue(cmd_opts)
   when "list" 
-    list_issues(cmd_opts, Issues)
+    Issues.list_issues(cmd_opts)
   when "resolve" 
-    resolve_issues(cmd_opts, Issues)
+    Issues.resolve_issues(cmd_opts)
   when "edit"
-    edit_issue(cmd_opts, Issues)
+    Issues.edit_issue(cmd_opts)
 end
 
 

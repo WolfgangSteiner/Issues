@@ -192,17 +192,22 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-  def select_issue(issue_id)
-    find_issue = lambda {|i| i.id.start_with?(issue_id) && i.status == "open"}
+  def select_issues(&select_proc)
+    return @issues_array.select(&select_proc)
+  end
   
-    num_issues = @issues_array.count(&find_issue)
-    if num_issues == 1
-      issue_index = @issues_array.index(&find_issue)
-      return @issues_array[issue_index]
 
-    elsif num_issues > 1
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def select_issue(&select_proc)
+    result = select_issues(&select_proc)
+    
+    if result.count == 1
+      return result[0]
+  
+    elsif result.count > 1
       puts "Found more than one open issues that match id #{issue_id}:"
-      @issues_array.each{|i| find_issue.call(i) && puts("#{i.id} #{i.title}")}
+      result.each{|i| puts("#{i.id} #{i.title}")}
       exit
     
     else
@@ -235,15 +240,28 @@ class IssuesDb
 #----------------------------------------------------------------------------------------------------------------------#
 
   def list_issues(opts)
-    list_proc = opts[:verbose] ? "format_verbose" : "format_list"
-    @issues_array.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
+    if opts[:issue_id]
+      list_issue(opts[:issue_id])
+    else
+      list_proc = opts[:verbose] ? "format_verbose" : "format_list"
+      @issues_array.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
+    end
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def list_issue(issue_id)
+    issue = select_issue {|i| i.id.start_with?(issue_id) }
+    issue.format_verbose()
   end
 
 
 #----------------------------------------------------------------------------------------------------------------------#
 
   def resolve_issues(opts)
-    resolved_issue = select_issue(opts[:issue_id])
+    issue_id = opts[:issue_id]
+    resolved_issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
     resolved_issue.status = "resolved"
     message = "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
     save_db()
@@ -254,7 +272,8 @@ class IssuesDb
 #----------------------------------------------------------------------------------------------------------------------#
 
   def edit_issue(opts)
-    issue = select_issue(opts[:issue_id])
+    issue_id = opts[:issue_id]
+    issue = select_issue { |i| i.id.start_with?(issue_id) } 
   
     did_change_issue = false
   
@@ -266,6 +285,7 @@ class IssuesDb
    
     did_change_issue && save_db()
   end
+
 
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -301,6 +321,9 @@ if cmd == 'list'
       opt :oldest, "list oldest issues first"
       opt :verbose, "verbose list of issues", :short => 'v'
     end
+    
+    ARGV && cmd_opts[:issue_id] = ARGV.shift 
+
 elsif cmd == "create"
   cmd_opts = 
     Trollop::options do

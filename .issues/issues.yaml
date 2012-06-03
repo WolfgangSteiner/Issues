@@ -83,7 +83,7 @@
 - !ruby/object:Issue
   date: 2012-05-17 19:40:06.157956000 +02:00
   id: d10ef9318a65766b4968ba5b7b4e1e64
-  status: open
+  status: resolved
   title: Implement listing of a single issue.
   type: bug
 - !ruby/object:Issue
@@ -116,3 +116,24 @@
   status: open
   title: Implement entering description on command line.
   type: improvement
+- !ruby/object:Issue
+  date: 2012-05-18 11:09:39.726717000 +02:00
+  id: 198a5f571051f0db745277c4bee4f793
+  status: open
+  title: Implement history
+  type: improvement
+- !ruby/object:Issue
+  date: 2012-06-01 21:49:30.892617000 +02:00
+  id: a9d60b58530228bd6b46679af954e3b5
+  status: open
+  title: Implement listing of specific issue.
+  type: improvement
+- !ruby/object:Issue
+  date: 2012-06-02 20:05:15.134548000 +02:00
+  id: 19b059c70f65021b16ad3d0cdde96204
+  status: open
+  title: This is just a test.
+  type: bug
+  description: ! 'This is a test description.
+
+'

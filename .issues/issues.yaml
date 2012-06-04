@@ -125,7 +125,7 @@
 - !ruby/object:Issue
   date: 2012-06-01 21:49:30.892617000 +02:00
   id: a9d60b58530228bd6b46679af954e3b5
-  status: open
+  status: duplicate(d10ef9318a65766b4968ba5b7b4e1e64)
   title: Implement listing of specific issue.
   type: improvement
 - !ruby/object:Issue
@@ -143,3 +143,9 @@
   status: resolved
   title: Fix resolving of issues
   type: bug
+- !ruby/object:Issue
+  date: 2012-06-04 21:05:49.080853000 +02:00
+  id: 8352ac051ea1c3bcd4db262b3ae2f5d4
+  status: resolved
+  title: Implement duplicate
+  type: improvement

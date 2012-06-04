@@ -297,7 +297,17 @@ class IssuesDb
     issue_id = opts[:issue_id]
     resolved_issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
 
-    status, message = (opts[:cmd] == "resolve") ? ["resolved", "Resolved"] : ["wontfix", "Won't fix"]
+    duplicate_of_id = opts[:cmd] == "duplicate" && select_issue {|i| i.id.start_with?(opts[:duplicate_of_id]) }.id
+
+    status, message = 
+    case opts[:cmd]
+    when "resolve"
+      ["resolved", "Resolved"]
+    when "wontfix"
+      ["wontfix", "Won't fix"]
+    when "duplicate"
+      ["duplicate(#{duplicate_of_id})", "Duplicate"]
+    end
 
     resolved_issue.status = status
     message = "#{message} issue #{resolved_issue.short_id} #{resolved_issue.title}"
@@ -349,10 +359,24 @@ end
 # Command Line Parsing
 #======================================================================================================================#
 
+def get_issue_ids(num_ids, usage)
+  result = []
+  num_ids.times do
+    id = ARGV.count > 0 && /^\h{1,32}$/ =~ ARGV[0] && ARGV.shift || nil
+    result << id
+  end
+
+  result.count && result.any? { |id| id == nil } && abort("Usage: issues #{usage}")
+  result.count == 1 ? result[0] : result
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
 EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
-SUB_COMMANDS = %w(list create resolve wontfix edit)
+SUB_COMMANDS = %w(list create resolve wontfix edit duplicate)
 global_opts = Trollop::options do
   banner "issue.rb: lightweight issue management"
   opt :dry_run, "Don't actually do anything", :short => "-n"
@@ -389,20 +413,28 @@ elsif cmd == "create"
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 
-elsif cmd == "resolve" || cmd == "wontfix"
+
+elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate"
   cmd_opts = 
     Trollop::options do
       opt :commit, "do a git commit", :short => 'c'
-    end  
-  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
-
+    end
+    
+  if cmd == "duplicate"
+    cmd_opts[:issue_id], cmd_opts[:duplicate_of_id] = get_issue_ids(2, "duplicate ID(issue) ID(duplicate of)")
+  else
+    cmd_opts[:issue_id] = get_issue_ids(1, "#{cmd} [-c] ID")
+  end
+  
+  
 elsif cmd == "edit"
   cmd_opts = 
     Trollop::options do
       opt :description, "edit the issue description", :short => 'd'
       opt :todos, "edit the issue todo list", :short => 't'
-    end      
-  cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
+    end
+  cmd_opts[:issue_id] = get_issue_ids(1, "edit ID") 
+
 
 elsif cmd == "set-type"
   new_type = ARGV.shift
@@ -410,6 +442,8 @@ elsif cmd == "set-type"
   cmd_opts[:new_type] = new_type
   ARGV.count > 0 && ARGV.all? { |id| /\h{1,32}$/ =~ id } || Trollop::die( "Please enter an issue id!")
   cmd_opts[:issue_ids] = ARGV.dup
+
+
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
@@ -429,7 +463,7 @@ case cmd
     Issues.create_issue(cmd_opts)
   when "list" 
     Issues.list_issues(cmd_opts)
-  when "resolve", "wontfix"
+  when "resolve", "wontfix", "duplicate"
     Issues.resolve_issues(cmd_opts)
   when "edit"
     Issues.edit_issue(cmd_opts)

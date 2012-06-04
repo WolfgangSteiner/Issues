@@ -20,7 +20,7 @@
 - !ruby/object:Issue
   date: 2012-05-16 16:54:02.413967000 +02:00
   id: efdc8d050c5137f32671fcbcbcf58d8a
-  status: open
+  status: resolved
   title: Implement listing of selected issue types
   type: improvement
 - !ruby/object:Issue

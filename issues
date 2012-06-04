@@ -244,7 +244,13 @@ class IssuesDb
       list_issue(opts[:issue_id])
     else
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
-      @issues_array.each {|issue| issue.method(list_proc).call if issue.status == 'open' }
+
+      issue_types = %w{bug improvement task}
+      did_select_issue_types = opts.any? { |key,value| issue_types.include?(key.to_s.chomp('s')) && value == true }
+      did_select_issue_types && issue_types.delete_if { |issue_type| opts["#{issue_type}s".to_sym] == false }
+      
+      issues = @issues_array.select { |issue| issue.status == 'open' && issue_types.include?(issue.type) } 
+      issues.each {|issue| issue.method(list_proc).call}
     end
   end
 
@@ -320,6 +326,9 @@ if cmd == 'list'
       opt :newest, "list newest issues first"
       opt :oldest, "list oldest issues first"
       opt :verbose, "verbose list of issues", :short => 'v'
+      opt :bugs, "list bugs",                 :short => 'b'
+      opt :improvements, "list improvements", :short => 'i'
+      opt :tasks, "list tasks",               :short => 't'
     end
     
     ARGV && cmd_opts[:issue_id] = ARGV.shift 

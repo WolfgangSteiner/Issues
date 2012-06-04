@@ -361,13 +361,19 @@ end
 
 def get_issue_ids(num_ids, usage)
   result = []
-  num_ids.times do
-    id = ARGV.count > 0 && /^\h{1,32}$/ =~ ARGV[0] && ARGV.shift || nil
-    result << id
-  end
+  count = num_ids >= 0 ? num_ids : ARGV.count
+  
+  begin
+    count.times do
+      ARGV.count > 0 && /^\h{1,32}$/ =~ ARGV[0] || raise 
+      result << ARGV.shift 
+    end
 
-  result.count && result.any? { |id| id == nil } && abort("Usage: issues #{usage}")
-  result.count == 1 ? result[0] : result
+    result.count == 1 ? result[0] : result
+
+  rescue
+    abort("Usage: issues #{usage}")
+  end
 end
 
 
@@ -402,7 +408,7 @@ if cmd == 'list'
       opt :tasks, "list tasks",               :short => 't'
     end
     
-    ARGV && cmd_opts[:issue_id] = ARGV.shift 
+    ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
 
 elsif cmd == "create"
   cmd_opts = 
@@ -440,8 +446,7 @@ elsif cmd == "set-type"
   new_type = ARGV.shift
   %w{bug improvement task}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
   cmd_opts[:new_type] = new_type
-  ARGV.count > 0 && ARGV.all? { |id| /\h{1,32}$/ =~ id } || Trollop::die( "Please enter an issue id!")
-  cmd_opts[:issue_ids] = ARGV.dup
+  ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task} ID")
 
 
 else

@@ -89,7 +89,7 @@
 - !ruby/object:Issue
   date: 2012-05-17 19:40:34.505065000 +02:00
   id: ca324bc98157f74ab3b86a73fab8494c
-  status: open
+  status: wontfix
   title: Implement of wontfix
   type: improvement
 - !ruby/object:Issue
@@ -131,7 +131,7 @@
 - !ruby/object:Issue
   date: 2012-06-02 20:05:15.134548000 +02:00
   id: 19b059c70f65021b16ad3d0cdde96204
-  status: open
+  status: wontfix
   title: This is just a test.
   type: bug
   description: ! 'This is a test description.

@@ -276,8 +276,13 @@ class IssuesDb
   def resolve_issues(opts)
     issue_id = opts[:issue_id]
     resolved_issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
-    resolved_issue.status = "resolved"
-    message = "Resolved issue #{resolved_issue.short_id} #{resolved_issue.title}"
+
+    status, message = (opts[:cmd] == "resolve") ? ["resolved", "Resolved"] : ["wontfix", "Won't fix"]
+
+    resolved_issue.status = status
+    message = "#{message} issue #{resolved_issue.short_id} #{resolved_issue.title}"
+    puts message
+
     save_db()
     opts[:commit] && exec("git commit -a -m \"#{message}\"")
   end
@@ -339,7 +344,7 @@ end
 cmd = ARGV.shift # get the subcommand
 cmd ||= 'list'
 
-cmd_opts = {}
+cmd_opts = {:cmd => cmd}
 
 if cmd == 'list'
   cmd_opts = 
@@ -364,7 +369,7 @@ elsif cmd == "create"
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 
-elsif cmd == "resolve"
+elsif cmd == "resolve" || cmd == "wontfix"
   cmd_opts = 
     Trollop::options do
       opt :commit, "do a git commit", :short => 'c'
@@ -401,7 +406,7 @@ case cmd
     Issues.create_issue(cmd_opts)
   when "list" 
     Issues.list_issues(cmd_opts)
-  when "resolve" 
+  when "resolve", "wontfix"
     Issues.resolve_issues(cmd_opts)
   when "edit"
     Issues.edit_issue(cmd_opts)

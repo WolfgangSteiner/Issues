@@ -332,7 +332,7 @@ end
 EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
-SUB_COMMANDS = %w(list create resolve edit)
+SUB_COMMANDS = %w(list create resolve wontfix edit)
 global_opts = Trollop::options do
   banner "issue.rb: lightweight issue management"
   opt :dry_run, "Don't actually do anything", :short => "-n"

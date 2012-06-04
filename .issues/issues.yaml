@@ -8,7 +8,7 @@
 - !ruby/object:Issue
   date: 2012-05-16 16:15:10.418552000 +02:00
   id: 085dcebdd6ccb2aea5c2102422485c1e
-  status: open
+  status: wontfix
   title: Base id on md5 of date + title.
   type: improvement
 - !ruby/object:Issue

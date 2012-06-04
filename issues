@@ -236,8 +236,28 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def determine_issue_type(opts)
+    issue_types = %w{bug improvement task}
+    issue_type = nil
+    issue_types.each { |t| opts[t.to_sym] == true && issue_type = t }
+    
+    issue_type && (return issue_type)
+
+    case opts[:title]
+    when /(improve|implement)/i
+      "improvement"
+    when /(fix|bug|crash)/i
+      "bug"
+    else
+      "task"
+    end
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
   def create_issue(opts)
-    type = opts[:improvement] ? "improvement" : opts[:task] ? "task" : "bug"
+    type = determine_issue_type(opts)
     new_issue = Issue.createNewIssue(opts[:title], type)
     @issues_array << new_issue
     save_db()  

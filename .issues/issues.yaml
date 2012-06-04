@@ -107,7 +107,7 @@
 - !ruby/object:Issue
   date: 2012-05-17 19:57:19.996550000 +02:00
   id: fcacc96ed5ed3926a874ef3f86d7b6af
-  status: open
+  status: wontfix
   title: Implement guessing of issue type
   type: improvement
 - !ruby/object:Issue

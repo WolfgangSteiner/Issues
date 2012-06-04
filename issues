@@ -244,9 +244,9 @@ class IssuesDb
     issue_type && (return issue_type)
 
     case opts[:title]
-    when /(improve|implement)/i
+    when /\b(improve|implement)/i
       "improvement"
-    when /(fix|bug|crash)/i
+    when /\b(fix|bug|crash)/i
       "bug"
     else
       "task"
@@ -364,7 +364,7 @@ end
 cmd = ARGV.shift # get the subcommand
 cmd ||= 'list'
 
-cmd_opts = {:cmd => cmd}
+cmd_opts = {}
 
 if cmd == 'list'
   cmd_opts = 
@@ -413,6 +413,9 @@ elsif cmd == "set-type"
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
+
+
+cmd_opts[:cmd] = cmd 
 
 
 #======================================================================================================================#

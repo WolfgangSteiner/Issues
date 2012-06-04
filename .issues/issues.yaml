@@ -107,7 +107,7 @@
 - !ruby/object:Issue
   date: 2012-05-17 19:57:19.996550000 +02:00
   id: fcacc96ed5ed3926a874ef3f86d7b6af
-  status: wontfix
+  status: open
   title: Implement guessing of issue type
   type: improvement
 - !ruby/object:Issue
@@ -137,3 +137,9 @@
   description: ! 'This is a test description.
 
 '
+- !ruby/object:Issue
+  date: 2012-06-04 20:54:09.070692000 +02:00
+  id: 8c9e57c63527c48a85465c9aeb54f96f
+  status: resolved
+  title: Fix resolving of issues
+  type: bug

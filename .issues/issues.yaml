@@ -67,13 +67,13 @@
   id: 7a2fd1be5ed77fdfe07dddf5a38cdde8
   status: open
   title: Implement delete issue command
-  type: bug
+  type: improvement
 - !ruby/object:Issue
   date: 2012-05-17 16:50:53.525605000 +02:00
   id: b91dc3b184fde4e853cd99f99454c148
-  status: open
+  status: resolved
   title: Implement update type command
-  type: bug
+  type: improvement
 - !ruby/object:Issue
   date: 2012-05-17 19:39:31.657665000 +02:00
   id: 9e0ad75839678ada0e8e6c3fd28327e7
@@ -91,7 +91,7 @@
   id: ca324bc98157f74ab3b86a73fab8494c
   status: open
   title: Implement of wontfix
-  type: bug
+  type: improvement
 - !ruby/object:Issue
   date: 2012-05-17 19:45:04.495833000 +02:00
   id: affeee54f97acf2cf5cbd25ce20365c9
@@ -109,7 +109,7 @@
   id: fcacc96ed5ed3926a874ef3f86d7b6af
   status: open
   title: Implement guessing of issue type
-  type: bug
+  type: improvement
 - !ruby/object:Issue
   date: 2012-05-17 19:58:31.561250000 +02:00
   id: 0051cad4deea412629d5df10b55f3287

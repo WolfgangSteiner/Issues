@@ -206,17 +206,25 @@ class IssuesDb
       return result[0]
   
     elsif result.count > 1
-      puts "Found more than one open issues that match id #{issue_id}:"
+      puts "Found more than one issue that match this query:"
       result.each{|i| puts("#{i.id} #{i.title}")}
       exit
     
     else
-      puts "Error: No open issue found with id #{issue_id}"
+      puts "Error: No issue found for query."
+      exit
     end
 
     nil
   end  
 
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def has_issue(issue_id)
+    @issues_array.any? { |issue| issue.id.start_with?(issue_id) }
+  end
+  
 
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -295,6 +303,20 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def set_type(opts)
+    opts[:issue_ids].each do | issue_id|
+      issue = select_issue { |i| i.id.start_with?(issue_id) }
+      issue.type = opts[:new_type]
+      issue.format_list
+    end
+    
+    save_db()
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+
 end
 
 
@@ -341,12 +363,14 @@ elsif cmd == "create"
       opt :task, "create a task", :short => 't'
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
+
 elsif cmd == "resolve"
   cmd_opts = 
     Trollop::options do
       opt :commit, "do a git commit", :short => 'c'
     end  
   cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
+
 elsif cmd == "edit"
   cmd_opts = 
     Trollop::options do
@@ -354,6 +378,13 @@ elsif cmd == "edit"
       opt :todos, "edit the issue todo list", :short => 't'
     end      
   cmd_opts[:issue_id] = ARGV.shift || Trollop::die( "Please enter an issue id!")
+
+elsif cmd == "set-type"
+  new_type = ARGV.shift
+  %w{bug improvement task}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
+  cmd_opts[:new_type] = new_type
+  ARGV.count > 0 && ARGV.all? { |id| /\h{1,32}$/ =~ id } || Trollop::die( "Please enter an issue id!")
+  cmd_opts[:issue_ids] = ARGV.dup
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
@@ -374,6 +405,8 @@ case cmd
     Issues.resolve_issues(cmd_opts)
   when "edit"
     Issues.edit_issue(cmd_opts)
+  when "set-type"
+    Issues.set_type(cmd_opts)
 end
 
 

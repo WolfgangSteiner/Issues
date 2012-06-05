@@ -1,36 +1,36 @@
 ---
 - !ruby/object:Issue
-  date: 2012-05-16 16:14:54.738899000 +02:00
+  created: 2012-05-16 16:14:54.738899000 +02:00
   id: 9b7d0b0004257329d1569901f7685e82
   status: resolved
   title: Implement resolve command.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 16:15:10.418552000 +02:00
+  created: 2012-05-16 16:15:10.418552000 +02:00
   id: 085dcebdd6ccb2aea5c2102422485c1e
   status: wontfix
   title: Base id on md5 of date + title.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 16:52:51.886070000 +02:00
+  created: 2012-05-16 16:52:51.886070000 +02:00
   id: bf58860ac07cac65d1cd085459a89880
   status: resolved
   title: Improve formatting of long titles.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 16:54:02.413967000 +02:00
+  created: 2012-05-16 16:54:02.413967000 +02:00
   id: efdc8d050c5137f32671fcbcbcf58d8a
   status: resolved
   title: Implement listing of selected issue types
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 16:54:17.971526000 +02:00
+  created: 2012-05-16 16:54:17.971526000 +02:00
   id: 89df78ae571e97e8128c32e1c31133c4
   status: open
   title: Implement adding of todos to issue
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 16:55:01.914550000 +02:00
+  created: 2012-05-16 16:55:01.914550000 +02:00
   id: b51b6c22af1e50be0d5d32c3666ef98e
   status: resolved
   title: Implement adding of description.
@@ -39,97 +39,101 @@
 
 '
 - !ruby/object:Issue
-  date: 2012-05-16 16:55:26.625241000 +02:00
+  created: 2012-05-16 16:55:26.625241000 +02:00
   id: adf8b59e50c2f477c335b8476d108fa7
   status: open
   title: Implement interactive creation of issues.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-16 17:02:01.167166000 +02:00
+  created: 2012-05-16 17:02:01.167166000 +02:00
   id: 6a7376e5baa704e0a214b86a36b6f65d
   status: open
   title: Implement sorting by newest, oldest
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 14:24:49.389268000 +02:00
+  created: 2012-05-17 14:24:49.389268000 +02:00
   id: 81b9e30a9a1e7d5a4f813fb050735651
   status: resolved
   title: Add option --commit to resolve command.
   type: bug
 - !ruby/object:Issue
-  date: 2012-05-17 16:47:23.460929000 +02:00
+  created: 2012-05-17 16:47:23.460929000 +02:00
   id: 510ede0e13230035815cf40b00cdf3c3
   status: resolved
   title: Fix utf8 support
   type: bug
 - !ruby/object:Issue
-  date: 2012-05-17 16:48:15.559977000 +02:00
+  created: 2012-05-17 16:48:15.559977000 +02:00
   id: 7a2fd1be5ed77fdfe07dddf5a38cdde8
   status: open
   title: Implement delete issue command
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 16:50:53.525605000 +02:00
+  created: 2012-05-17 16:50:53.525605000 +02:00
   id: b91dc3b184fde4e853cd99f99454c148
   status: resolved
   title: Implement update type command
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 19:39:31.657665000 +02:00
+  created: 2012-05-17 19:39:31.657665000 +02:00
   id: 9e0ad75839678ada0e8e6c3fd28327e7
   status: resolved
   title: Fix editing of whole issues.
   type: bug
 - !ruby/object:Issue
-  date: 2012-05-17 19:40:06.157956000 +02:00
+  created: 2012-05-17 19:40:06.157956000 +02:00
   id: d10ef9318a65766b4968ba5b7b4e1e64
   status: resolved
   title: Implement listing of a single issue.
   type: bug
 - !ruby/object:Issue
-  date: 2012-05-17 19:40:34.505065000 +02:00
+  created: 2012-05-17 19:40:34.505065000 +02:00
   id: ca324bc98157f74ab3b86a73fab8494c
   status: wontfix
   title: Implement of wontfix
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 19:45:04.495833000 +02:00
+  created: 2012-05-17 19:45:04.495833000 +02:00
   id: affeee54f97acf2cf5cbd25ce20365c9
   status: resolved
   title: List issue type in short list
   type: bug
 - !ruby/object:Issue
-  date: 2012-05-17 19:55:19.192591000 +02:00
+  created: 2012-05-17 19:55:19.192591000 +02:00
   id: 1f575e9c614ba00e28fbac0bdbc801ac
   status: open
   title: Create priorities
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 19:57:19.996550000 +02:00
+  created: 2012-05-17 19:57:19.996550000 +02:00
   id: fcacc96ed5ed3926a874ef3f86d7b6af
   status: resolved
   title: Implement guessing of issue type
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-17 19:58:31.561250000 +02:00
+  created: 2012-05-17 19:58:31.561250000 +02:00
   id: 0051cad4deea412629d5df10b55f3287
   status: open
   title: Implement entering description on command line.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-05-18 11:09:39.726717000 +02:00
+  created: 2012-05-18 11:09:39.726717000 +02:00
   id: 198a5f571051f0db745277c4bee4f793
-  status: open
+  status: resolved
   title: Implement history
   type: improvement
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-06-05 15:40:30.678035000 +02:00
+    message: Changed status to resolved
 - !ruby/object:Issue
-  date: 2012-06-01 21:49:30.892617000 +02:00
+  created: 2012-06-01 21:49:30.892617000 +02:00
   id: a9d60b58530228bd6b46679af954e3b5
   status: duplicate(d10ef9318a65766b4968ba5b7b4e1e64)
   title: Implement listing of specific issue.
   type: improvement
 - !ruby/object:Issue
-  date: 2012-06-02 20:05:15.134548000 +02:00
+  created: 2012-06-02 20:05:15.134548000 +02:00
   id: 19b059c70f65021b16ad3d0cdde96204
   status: wontfix
   title: This is just a test.
@@ -138,14 +142,56 @@
 
 '
 - !ruby/object:Issue
-  date: 2012-06-04 20:54:09.070692000 +02:00
+  created: 2012-06-04 20:54:09.070692000 +02:00
   id: 8c9e57c63527c48a85465c9aeb54f96f
   status: resolved
   title: Fix resolving of issues
   type: bug
 - !ruby/object:Issue
-  date: 2012-06-04 21:05:49.080853000 +02:00
+  created: 2012-06-04 21:05:49.080853000 +02:00
   id: 8352ac051ea1c3bcd4db262b3ae2f5d4
   status: resolved
   title: Implement duplicate
   type: improvement
+- !ruby/object:Issue
+  created: 2012-06-05 10:18:53.784959000 +02:00
+  id: 873479cd26be00627709a85891507deb
+  status: wontfix
+  title: Add modifcation date to issues.
+  type: improvement
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-06-05 11:40:55.366839000 +02:00
+    message: Changed status to wontfix
+- !ruby/object:Issue
+  created: 2012-06-05 10:40:45.855911000 +02:00
+  id: 4e16d33426b5f41d11a11ded6e2bcf3d
+  status: resolved
+  title: This is yet another test
+  type: bug
+  description: ! 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
+    nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
+    voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+    kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem
+    ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
+    invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos
+    et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
+    takimata sanctus est Lorem ipsum dolor.
+
+'
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-06-05 10:40:45.855915000 +02:00
+    message: Issue created
+  - !ruby/object:LogEntry
+    date: 2012-06-05 10:55:47.881008000 +02:00
+    message: Changed status to resolved
+  - !ruby/object:LogEntry
+    date: 2012-06-05 11:23:15.328700000 +02:00
+    message: Edited description
+  - !ruby/object:LogEntry
+    date: 2012-06-05 11:36:57.312572000 +02:00
+    message: Changed typed to bug
+  - !ruby/object:LogEntry
+    date: 2012-06-05 11:37:06.157447000 +02:00
+    message: Changed typed to bug

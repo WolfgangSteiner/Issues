@@ -42,6 +42,13 @@ end
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+def sub_heading(comment)
+  [comment(""), small_separator, comment(comment), small_separator].join("\n")
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
 def pad_string(a_string, a_suffix, a_width)
   a_suffix.length ? a_string + " " * (a_width - a_string.length - a_suffix.length) + a_suffix : a_string.dup
 end
@@ -49,8 +56,31 @@ end
 
 #======================================================================================================================#
 
+class LogEntry
+  fattr :date, :message
+  
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def initialize(message)
+    @date = Time.new
+    @message = message.dup
+  end
+end
+
+
+#======================================================================================================================#
+
 class Issue
-  fattr :id, :date, :type, :title, :description, :status
+  fattr :id, :created, :type, :title, :description, :status
+  attr_accessor :history
+  
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def initialize
+    @history = []
+  end
 
 
 #----------------------------------------------------------------------------------------------------------------------#  
@@ -58,10 +88,11 @@ class Issue
   def self.createNewIssue(title, type="bug")
     newIssue = Issue.new
     newIssue.id = SecureRandom.hex.force_encoding("UTF-8")
-    newIssue.date = Time.new
+    newIssue.created  = Time.new
     newIssue.title = title
     newIssue.status = "open"
     newIssue.type = type
+    newIssue.history = [LogEntry.new("Issue created")]
     newIssue
   end
 
@@ -74,15 +105,27 @@ class Issue
     end
   end  
       
+
+#----------------------------------------------------------------------------------------------------------------------#  
+
+  def log(message)
+    @history ||= []
+    @history << LogEntry.new(message)
+  end
+  
+      
 #----------------------------------------------------------------------------------------------------------------------#  
   
-  def format_title(prefix, only_first_line_prefix=false, suffix='')
+  def format_line(text, prefix, only_first_line_prefix=false, suffix='', alternate_prefix='')
     the_suffix = suffix.length ? " " + suffix : ""
     text_width = terminal_width - 1 - the_suffix.length
-    title_array = @title.split(" ")
+    title_array = text.split(" ")
     result = []
     current_line = prefix.dup
-    current_prefix = only_first_line_prefix && " " * prefix.length || prefix.dup
+    current_prefix = 
+      only_first_line_prefix \
+      ? alternate_prefix + " " * (prefix.length - alternate_prefix.length) \
+      : prefix.dup
     
     title_array.each do |w|
       (current_line.length + w.length + 1 > text_width) \
@@ -100,15 +143,20 @@ class Issue
   
   def format_verbose
     puts separator
-    puts comment("#{@id[0,6]} #{@date.to_s[0,10]} #{@type.capitalize} (#{@status})")
-    puts format_title("#", false, "#")
+    puts comment("#{@id[0,6]} #{@type.capitalize} (#{@status})  #{@created.to_s[0,16]}")
+    puts comment("")
+    puts format_line(@title, "#", false, "#")
     
     if @description
-      puts small_separator
-      
+      puts sub_heading("Description:")
       @description.split("\n").each do |l|
-        puts pad_string("# #{l}", "#", terminal_width)
+        puts format_line(@description, "#", false, "#")
       end
+    end
+    
+    if @history && @history.count > 0
+      puts sub_heading("Log:")
+      @history.each { |l| puts format_line("#{l.message}", "# #{l.date.to_s[0,16]}", true, "#", "#") }
     end
     
     puts separator
@@ -120,7 +168,7 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#
 
   def format_list
-    puts format_title("#{short_id} (#{@type[0,1].capitalize})", true)
+    puts format_line(@title, "#{short_id} (#{@type[0,1].capitalize})", true)
   end
 
 
@@ -135,8 +183,6 @@ class Issue
     file.open
     new_description = file.read
 
-    puts new_description
-
     if new_description != @description
       @description = new_description.dup
       return true
@@ -144,6 +190,7 @@ class Issue
     
     return false
   end
+
 
 #----------------------------------------------------------------------------------------------------------------------#  
 
@@ -277,7 +324,9 @@ class IssuesDb
       did_select_issue_types = opts.any? { |key,value| issue_types.include?(key.to_s.chomp('s')) && value == true }
       did_select_issue_types && issue_types.delete_if { |issue_type| opts["#{issue_type}s".to_sym] == false }
       
-      issues = @issues_array.select { |issue| issue.status == 'open' && issue_types.include?(issue.type) } 
+      status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
+            
+      issues = @issues_array.select { |issue| (status_regex =~ issue.status) && issue_types.include?(issue.type) } 
       issues.each {|issue| issue.method(list_proc).call}
     end
   end
@@ -310,8 +359,11 @@ class IssuesDb
     end
 
     resolved_issue.status = status
+    resolved_issue.log "Changed status to #{status}"
+    
     message = "#{message} issue #{resolved_issue.short_id} #{resolved_issue.title}"
     puts message
+    
 
     save_db()
     opts[:commit] && exec("git commit -a -m \"#{message}\"")
@@ -327,9 +379,9 @@ class IssuesDb
     did_change_issue = false
   
     if (opts[:description])
-      did_change_issue = issue.edit_description
+      did_change_issue = issue.edit_description && issue.log("Edited description")
     else
-      did_change_issue = issue.edit_all
+      did_change_issue = issue.edit_all && issue.log("Edited issue")
     end
    
     did_change_issue && save_db()
@@ -339,10 +391,16 @@ class IssuesDb
 #----------------------------------------------------------------------------------------------------------------------#
 
   def set_type(opts)
-    opts[:issue_ids].each do | issue_id|
+    new_type = opts[:new_type]
+    opts[:issue_ids].each do |issue_id|
       issue = select_issue { |i| i.id.start_with?(issue_id) }
-      issue.type = opts[:new_type]
-      issue.format_list
+      if issue.type != new_type
+        issue.type = new_type
+        issue.log("Changed typed to #{issue.type}")
+        issue.format_list
+      else
+        puts "Issue #{issue.short_id} already of type #{issue.type}."
+      end
     end
     
     save_db()
@@ -369,7 +427,7 @@ def get_issue_ids(num_ids, usage)
       result << ARGV.shift 
     end
 
-    result.count == 1 ? result[0] : result
+    result.count == 1 && num_ids > 0 ? result[0] : result
 
   rescue
     abort("Usage: issues #{usage}")
@@ -399,7 +457,7 @@ cmd_opts = {}
 if cmd == 'list'
   cmd_opts = 
     Trollop::options do
-      opt :all, "list all issues"
+      opt :all, "list all issues",            :short => 'a'
       opt :newest, "list newest issues first"
       opt :oldest, "list oldest issues first"
       opt :verbose, "verbose list of issues", :short => 'v'

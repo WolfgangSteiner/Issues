@@ -4,6 +4,7 @@
 
 require 'rubygems'
 require 'fattr'
+require 'io/console'
 require 'SecureRandom'
 require 'trollop'
 require 'terminfo'
@@ -372,6 +373,37 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def delete_issues(opts)
+    delete_issues = []
+
+    opts[:issue_ids].each do |issue_id|
+      delete_issues << select_issue{|i| i.id.start_with?(issue_id)}
+    end
+    
+    puts "Ok to delete issues: "
+    delete_issues.each { |issue| puts "#{issue.short_id} \"#{issue.title}\"" }
+    puts "[y/N]"
+    
+    answer = STDIN.getch
+    
+    if /y/i =~ answer
+      @issues_array -= delete_issues
+      save_db()
+      
+      if delete_issues.count == 1
+        puts "Removed issue #{delete_issues[0].short_id} \"#{delete_issues[0].title}\" from database."
+      else
+        puts "Removed issues "
+        delete_issues.each { |issue| puts "#{issue.short_id} \"#{issue.title}\"" }
+        puts "from database."
+      end
+    end
+
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
   def edit_issue(opts)
     issue_id = opts[:issue_id]
     issue = select_issue { |i| i.id.start_with?(issue_id) } 
@@ -440,7 +472,7 @@ end
 EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
-SUB_COMMANDS = %w(list create resolve wontfix edit duplicate)
+SUB_COMMANDS = %w(list create resolve wontfix edit duplicate delete)
 global_opts = Trollop::options do
   banner "issue.rb: lightweight issue management"
   opt :dry_run, "Don't actually do anything", :short => "-n"
@@ -507,6 +539,9 @@ elsif cmd == "set-type"
   ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task} ID")
 
 
+elsif cmd == "delete"
+  cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
+
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
@@ -532,6 +567,8 @@ case cmd
     Issues.edit_issue(cmd_opts)
   when "set-type"
     Issues.set_type(cmd_opts)
+  when "delete"
+    Issues.delete_issues(cmd_opts)
 end
 
 

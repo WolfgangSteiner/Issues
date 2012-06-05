@@ -65,9 +65,13 @@
 - !ruby/object:Issue
   created: 2012-05-17 16:48:15.559977000 +02:00
   id: 7a2fd1be5ed77fdfe07dddf5a38cdde8
-  status: open
+  status: resolved
   title: Implement delete issue command
   type: improvement
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-06-05 16:19:31.043125000 +02:00
+    message: Changed status to resolved
 - !ruby/object:Issue
   created: 2012-05-17 16:50:53.525605000 +02:00
   id: b91dc3b184fde4e853cd99f99454c148
@@ -163,35 +167,3 @@
   - !ruby/object:LogEntry
     date: 2012-06-05 11:40:55.366839000 +02:00
     message: Changed status to wontfix
-- !ruby/object:Issue
-  created: 2012-06-05 10:40:45.855911000 +02:00
-  id: 4e16d33426b5f41d11a11ded6e2bcf3d
-  status: resolved
-  title: This is yet another test
-  type: bug
-  description: ! 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam
-    nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam
-    voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
-    kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem
-    ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor
-    invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos
-    et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea
-    takimata sanctus est Lorem ipsum dolor.
-
-'
-  history:
-  - !ruby/object:LogEntry
-    date: 2012-06-05 10:40:45.855915000 +02:00
-    message: Issue created
-  - !ruby/object:LogEntry
-    date: 2012-06-05 10:55:47.881008000 +02:00
-    message: Changed status to resolved
-  - !ruby/object:LogEntry
-    date: 2012-06-05 11:23:15.328700000 +02:00
-    message: Edited description
-  - !ruby/object:LogEntry
-    date: 2012-06-05 11:36:57.312572000 +02:00
-    message: Changed typed to bug
-  - !ruby/object:LogEntry
-    date: 2012-06-05 11:37:06.157447000 +02:00
-    message: Changed typed to bug

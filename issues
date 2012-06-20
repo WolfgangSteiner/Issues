@@ -418,7 +418,8 @@ SUB_COMMANDS = {
   "wontfix"   => "set status of issue to \"won't fix\"",
   "duplicate" => "mark issue as duplicate of another issue",
   "edit"      => "edit an existing issue",
-  "delete"    => "delte an issue"}
+  "delete"    => "delete an issue",
+  "set-type"  => "set the type of an issue"}
 
 LeftFieldLength = 
   SUB_COMMANDS.collect { |key, value| key.length }.max
@@ -492,12 +493,22 @@ elsif cmd == "edit"
   cmd_opts = 
     Trollop::options do
       opt :description, "edit the issue description", :short => 'd'
-      opt :todos, "edit the issue todo list", :short => 't'
     end
   cmd_opts[:issue_id] = get_issue_ids(1, "edit ID") 
 
 
 elsif cmd == "set-type"
+  Trollop::options do
+    banner <<-EOL
+Usage:
+------
+issues set-type {bug|improvement|task} ID
+
+Options:
+--------
+EOL
+  end
+
   new_type = ARGV.shift
   %w{bug improvement task}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
   cmd_opts[:new_type] = new_type

@@ -13,7 +13,7 @@ Issues allows you to manage your bugs, improvements and tasks from the command l
 Usage
 -----
 
-### Creating issues
+### Creating issues:
 
 ```
 issues create "Issues title"
@@ -27,7 +27,7 @@ Options:
 Will create a bug, improvement or task, respectively. When no option ```[-b | -i | -t]```` is given, ```ìssues``` will try to guess the type, based on keywords contained in the heading, defaulting to creating a task.
 
 
-### Listing issues
+### Listing issues:
 
 ```
 issues
@@ -45,9 +45,73 @@ Options:
 ```
 
 
+Print a specific issue including its description.
+
 ```
 issues list ID
 ```
-will print a specific issue including its description.
 
+### Resolving issues:
+```
+issues resolve ID
+issues wontfix ID
+issues duplicate ID OTHER_ID
 
+Options:
+  --commit, -c:   do a git commit
+    --help, -h:   Show this message
+```
+
+Using the ````--commit``` option is equivalent to doing a ```git commit -a -m "Resolved issue #{ID} #{ISSUE_TITLE}```.
+When specifying an ID, it is sufficient to give the first few digits, just enough that an open issue can be uniquely
+identified.
+
+### Deleting issues:
+```
+issues delete ID
+```
+
+### Editing issues:
+```
+issues edit ID
+
+Options:
+  --description, -d:   edit the issue description
+         --help, -h:   Show this message
+```
+
+### Updating the issue type:
+```
+issues set-type {bug|improvement|task} ID [ID2 ...]
+```
+
+Example
+-------
+
+```
+> issues create "Put water in kettle"
+Created issue 992b87 Put water in kettle
+> issues create "Put kettle on stove"
+Created issue bbe372 Put kettle on stove
+> issues create "Turn on stove"
+Created issue 531eff Turn on stove
+> issues create "Wait until water is boiling."
+Created issue 851129 Wait until water is boiling.
+> issues
+992b87 (T) Put water in kettle                                                                         
+bbe372 (T) Put kettle on stove                                                                         
+531eff (T) Turn on stove                                                                               
+851129 (T) Wait until water is boiling. 
+
+> issues list bbe
+#=====================================================================================================#
+# bbe372 Task (open)  2012-06-20 20:22                                                                #
+#                                                                                                     #
+# Put kettle on stove                                                                                 #
+#                                                                                                     #
+#-----------------------------------------------------------------------------------------------------#
+# Log:                                                                                                #
+#-----------------------------------------------------------------------------------------------------#
+# 2012-06-20 20:22 Issue created                                                                      #
+#=====================================================================================================#
+```

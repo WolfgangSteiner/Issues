@@ -15,7 +15,8 @@ Usage
 
 ### Creating issues
 
-```issues create "Issues title"
+```
+issues create "Issues title"
 Options:
           --bug, -b:   create a bug
   --improvement, -i:   create an improvement

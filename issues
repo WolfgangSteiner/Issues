@@ -411,13 +411,39 @@ end
 EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
-SUB_COMMANDS = %w(list create resolve wontfix edit duplicate delete)
-global_opts = Trollop::options do
-  banner "issue.rb: lightweight issue management"
-  opt :dry_run, "Don't actually do anything", :short => "-n"
-  stop_on SUB_COMMANDS
-end
+SUB_COMMANDS = {
+  "list"      => "list issues",
+  "create"    => "create a new issue",
+  "resolve"   => "set status of issue to \"resolved\"",
+  "wontfix"   => "set status of issue to \"won't fix\"",
+  "duplicate" => "mark issue as duplicate of another issue",
+  "edit"      => "edit an existing issue",
+  "delete"    => "delte an issue"}
 
+LeftFieldLength = 
+  SUB_COMMANDS.collect { |key, value| key.length }.max
+  
+SubCommandHelp =
+  SUB_COMMANDS.collect {|key,value| "  #{key.ljust(LeftFieldLength)}  #{value}"}.join("\n")
+
+  
+global_opts = Trollop::options do
+  banner <<-EOL
+issues: lightweight distributed issue management.
+  
+Usage:
+------
+issues [<command>] [<options] [<args>]
+  
+Commands are:
+-------------
+#{SubCommandHelp}
+
+Global Options:
+---------------
+  EOL
+  stop_on SUB_COMMANDS.keys
+end
 
 
 cmd = ARGV.shift # get the subcommand

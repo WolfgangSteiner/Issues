@@ -89,7 +89,7 @@ class Issue
     if @description
       puts PrettyComment.sub_heading("Description:")
       @description.split("\n").each do |l|
-        puts PrettyComment.format_line(@description, "#", false, "#")
+        puts PrettyComment.format_line(l, "#", false, "#")
       end
     end
     

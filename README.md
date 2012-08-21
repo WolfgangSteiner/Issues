@@ -24,7 +24,7 @@ Options:
          --help, -h:   Show this message
 ```
 
-Will create a bug, improvement or task, respectively. When no option ```[-b | -i | -t]```` is given, ```ìssues``` will try to guess the type, based on keywords contained in the heading, defaulting to creating a task.
+Will create a bug, improvement or task, respectively. When no option ```[-b | -i | -t]``` is given, ```issues``` will try to guess the type, based on keywords contained in the heading, defaulting to creating a task.
 
 
 ### Listing issues:
@@ -62,7 +62,7 @@ Options:
     --help, -h:   Show this message
 ```
 
-Using the ````--commit``` option is equivalent to doing a ```git commit -a -m "Resolved issue #{ID} #{ISSUE_TITLE}```.
+Using the ```--commit``` option is equivalent to doing a ```git commit -a -m "Resolved issue #{ID} #{ISSUE_TITLE}```.
 When specifying an ID, it is sufficient to give the first few digits, just enough that an open issue can be uniquely
 identified.
 
@@ -78,6 +78,7 @@ issues edit ID
 Options:
   --description, -d:   edit the issue description
          --help, -h:   Show this message
+         
 ```
 
 ### Updating the issue type:

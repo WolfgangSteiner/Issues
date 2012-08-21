@@ -167,3 +167,13 @@
   - !ruby/object:LogEntry
     date: 2012-06-05 11:40:55.366839000 +02:00
     message: Changed status to wontfix
+- !ruby/object:Issue
+  created: 2012-08-21 17:49:10.724435000 +02:00
+  id: f47094cf113bbb06e1c8ca15f15fa6cf
+  status: open
+  title: Implement tags
+  type: feature
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-08-21 17:49:10.724440000 +02:00
+    message: Issue created

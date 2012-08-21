@@ -300,7 +300,7 @@ class IssuesDb
     resolved_issue.status = status
     resolved_issue.log "Changed status to #{status}"
     
-    message = "#{message} issue #{resolved_issue.short_id} #{resolved_issue.title}"
+    message = "#{message} issue #{resolved_issue.short_id}: #{resolved_issue.title}"
     puts message
     
 

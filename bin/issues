@@ -223,15 +223,16 @@ class IssuesDb
 #----------------------------------------------------------------------------------------------------------------------#
 
   def determine_issue_type(opts)
-    issue_types = %w{bug improvement task}
-    issue_type = nil
-    issue_types.each { |t| opts[t.to_sym] == true && issue_type = t }
+    issue_types = %w{bug improvement task feature}
+    issue_type = opts[:type] ? opts[:type].downcase : nil
     
     issue_type && (return issue_type)
 
     case opts[:title]
-    when /\b(improve|implement)/i
+    when /\b(improve)/i
       "improvement"
+    when /\b(implement)/i
+      "feature"
     when /\b(fix|bug|crash)/i
       "bug"
     else
@@ -259,13 +260,12 @@ class IssuesDb
     else
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
 
-      issue_types = %w{bug improvement task}
-      did_select_issue_types = opts.any? { |key,value| issue_types.include?(key.to_s.chomp('s')) && value == true }
-      did_select_issue_types && issue_types.delete_if { |issue_type| opts["#{issue_type}s".to_sym] == false }
-      
+      did_select_issue_types = opts[:type]       
       status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
             
-      issues = @issues_array.select { |issue| (status_regex =~ issue.status) && issue_types.include?(issue.type) } 
+      issues = @issues_array.select do |issue| 
+        (status_regex =~ issue.status) && (issue.type == opts[:type] || !did_select_issue_types)
+      end
       issues.each {|issue| issue.method(list_proc).call}
     end
   end
@@ -458,9 +458,7 @@ if cmd == 'list'
       opt :newest, "list newest issues first"
       opt :oldest, "list oldest issues first"
       opt :verbose, "verbose list of issues", :short => 'v'
-      opt :bugs, "list bugs",                 :short => 'b'
-      opt :improvements, "list improvements", :short => 'i'
-      opt :tasks, "list tasks",               :short => 't'
+      opt :type, "list issues of given type (bug, improvement, task, feature)", :short => 't', :type => String 
     end
     
     ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
@@ -468,9 +466,7 @@ if cmd == 'list'
 elsif cmd == "create"
   cmd_opts = 
     Trollop::options do
-      opt :bug, "create a bug", :short => 'b'
-      opt :improvement, "create an improvement", :short => 'i'
-      opt :task, "create a task", :short => 't'
+      opt :type, "create issue of specific type (e.g. bug, feature, improvement, task)", :short => 't', :type => String
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 

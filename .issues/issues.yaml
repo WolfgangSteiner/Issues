@@ -28,7 +28,7 @@
   id: 89df78ae571e97e8128c32e1c31133c4
   status: open
   title: Implement adding of todos to issue
-  type: improvement
+  type: feature
 - !ruby/object:Issue
   created: 2012-05-16 16:55:01.914550000 +02:00
   id: b51b6c22af1e50be0d5d32c3666ef98e
@@ -43,13 +43,13 @@
   id: adf8b59e50c2f477c335b8476d108fa7
   status: open
   title: Implement interactive creation of issues.
-  type: improvement
+  type: feature
 - !ruby/object:Issue
   created: 2012-05-16 17:02:01.167166000 +02:00
   id: 6a7376e5baa704e0a214b86a36b6f65d
   status: open
   title: Implement sorting by newest, oldest
-  type: improvement
+  type: feature
 - !ruby/object:Issue
   created: 2012-05-17 14:24:49.389268000 +02:00
   id: 81b9e30a9a1e7d5a4f813fb050735651
@@ -106,8 +106,8 @@
   created: 2012-05-17 19:55:19.192591000 +02:00
   id: 1f575e9c614ba00e28fbac0bdbc801ac
   status: open
-  title: Create priorities
-  type: improvement
+  title: Implement priorities
+  type: feature
 - !ruby/object:Issue
   created: 2012-05-17 19:57:19.996550000 +02:00
   id: fcacc96ed5ed3926a874ef3f86d7b6af
@@ -119,7 +119,7 @@
   id: 0051cad4deea412629d5df10b55f3287
   status: open
   title: Implement entering description on command line.
-  type: improvement
+  type: feature
 - !ruby/object:Issue
   created: 2012-05-18 11:09:39.726717000 +02:00
   id: 198a5f571051f0db745277c4bee4f793

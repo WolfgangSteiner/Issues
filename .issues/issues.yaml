@@ -177,3 +177,13 @@
   - !ruby/object:LogEntry
     date: 2012-08-21 17:49:10.724440000 +02:00
     message: Issue created
+- !ruby/object:Issue
+  created: 2012-08-24 14:18:45.491555000 +02:00
+  id: 3723615df7a0fb9dacc37d174f9c1e6e
+  status: open
+  title: allow multiple issues to be resolved at once
+  type: improvement
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-08-24 14:18:45.491559000 +02:00
+    message: Issue created

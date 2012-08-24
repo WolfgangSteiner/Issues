@@ -187,3 +187,13 @@
   - !ruby/object:LogEntry
     date: 2012-08-24 14:18:45.491559000 +02:00
     message: Issue created
+- !ruby/object:Issue
+  created: 2012-08-24 14:19:33.638515000 +02:00
+  id: 3afcc5db9c86b24b63567300de71830b
+  status: open
+  title: add commit option to issues create
+  type: improvement
+  history:
+  - !ruby/object:LogEntry
+    date: 2012-08-24 14:19:33.638521000 +02:00
+    message: Issue created

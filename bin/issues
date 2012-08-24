@@ -505,9 +505,9 @@ EOL
   end
 
   new_type = ARGV.shift
-  %w{bug improvement task}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
+  %w{bug improvement task feature}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
   cmd_opts[:new_type] = new_type
-  ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task} ID")
+  ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
 
 
 elsif cmd == "delete"

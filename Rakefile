@@ -5,7 +5,7 @@ task :build do
 end
 
 task :install => :build do
-  `sudo gem install ruby-issues-#{Issues::VERSION}.gem`
+  `sudo gem install -l ruby-issues-#{Issues::VERSION}.gem`
 end
 
 task :push => :build do

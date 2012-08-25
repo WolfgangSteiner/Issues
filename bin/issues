@@ -35,7 +35,7 @@ end
 #======================================================================================================================#
 
 class Issue
-  fattr :id, :created, :type, :title, :description, :status, :milestone
+  fattr :id, :created, :type, :title, :description, :status, :milestone, :estimate
   attr_accessor :history
   
 
@@ -81,28 +81,33 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#  
   
   def format_verbose
-    milestone = @milestone ? "[#{@milestone}]" : "[NO MILESTONE]"
+    milestone = @milestone ? "#{@milestone}" : "NO MILESTONE"
+    estimate = @estimate ? "#{@estimate}h" : "NO ESTIMATE"
+    milestone_estimate = "[#{estimate}, #{milestone}]"
     
-    puts PrettyComment.separator
-    puts PrettyComment.comment("#{@id[0,6]} #{@type.capitalize} (#{@status}) #{milestone} #{@created.to_s[0,16]}")
-    puts PrettyComment.comment("")
-    puts PrettyComment.format_line(@title, "#", false, "#")
+    result = []
+    result << PrettyComment.separator
+    result << PrettyComment.comment("#{@id[0,6]} #{@type.capitalize} (#{@status}) #{milestone_estimate} #{@created.to_s[0,16]}")
+    result << PrettyComment.comment("")
+    result << PrettyComment.format_line(@title, "#", false, "#")
     
     if @description
-      puts PrettyComment.sub_heading("Description:")
+      result << PrettyComment.sub_heading("Description:")
       @description.split("\n").each do |l|
-        puts PrettyComment.format_line(l, "#", false, "#")
+        result << PrettyComment.format_line(l, "#", false, "#")
       end
     end
     
     if @history && @history.count > 0
-      puts PrettyComment.sub_heading("Log:")
-      @history.each { |l| puts PrettyComment.format_line("#{l.message}", "# #{l.date.to_s[0,16]}", true, "#", "#") }
+      result << PrettyComment.sub_heading("Log:")
+      @history.each { |l| result << PrettyComment.format_line("#{l.message}", "# #{l.date.to_s[0,16]}", true, "#", "#") }
     end
     
-    puts PrettyComment.separator
-    puts
-    puts
+    result << PrettyComment.separator
+    result << ""
+    result << ""
+    
+    result.join("\n")
   end
 
 
@@ -111,7 +116,7 @@ class Issue
   def format_list
     entry = @title
     @milestone && entry += " [#{@milestone}]" 
-    puts PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true)
+    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true)
   end
 
 
@@ -250,6 +255,8 @@ class IssuesDb
   def create_issue(opts)
     type = determine_issue_type(opts)
     new_issue = Issue.createNewIssue(opts[:title], type)
+    new_issue.milestone = opts[:milestone]
+    new_issue.estimate = opts[:estimate]
     @issues_array << new_issue
     save_db()  
     puts "Created issue #{new_issue.short_id} #{new_issue.title}"
@@ -273,7 +280,7 @@ class IssuesDb
           && (issue.type == opts[:type] || !did_select_issue_types) \
           && (issue.milestone == opts[:milestone] || !did_select_milestone)
       end
-      issues.each {|issue| issue.method(list_proc).call}
+      issues.each {|issue| puts issue.method(list_proc).call}
     end
   end
 
@@ -282,7 +289,7 @@ class IssuesDb
 
   def list_issue(issue_id)
     issue = select_issue {|i| i.id.start_with?(issue_id) }
-    issue.format_verbose()
+    puts issue.format_verbose()
   end
 
 
@@ -367,6 +374,28 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def estimate(opts)
+    milestone = opts[:milestone]
+    total = 0.0
+    
+    issues_to_estimate = @issues_array.select { |i| i.milestone == milestone && i.status == "open" }
+    issues_without_estimates = @issues_array.select { |i| i.milestone == milestone && i.status == "open" && !i.estimate }
+    if issues_without_estimates.count > 0 
+      puts PrettyComment.h3("Warning: Found issues without estimates")
+      issues_without_estimates.each {|i| puts i.format_list}
+      puts PrettyComment.separator("-")
+      puts
+    end
+    
+    issues_to_estimate.each { |i| (i.estimate && total += i.estimate) }
+    
+    puts "Milestone #{milestone} will take #{total} man-hours to complete."
+    puts
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
   def set_type(opts)
     new_type = opts[:new_type]
     opts[:issue_ids].each do |issue_id|
@@ -374,7 +403,7 @@ class IssuesDb
       if issue.type != new_type
         issue.type = new_type
         issue.log("Changed type to #{issue.type}")
-        issue.format_list
+        puts issue.format_list
         puts "Changed type of #{issue.short_id} to #{issue.type}"
       else
         puts "Issue #{issue.short_id} already of type #{issue.type}."
@@ -394,9 +423,28 @@ class IssuesDb
       if issue.milestone != new_milestone
         issue.milestone = new_milestone
         issue.log("Changed milestone to #{issue.milestone}")
-        issue.format_list
+        puts issue.format_list
       else
         puts "Issue #{issue.short_id} already has milestone #{issue.milestone}."
+      end
+    end
+    
+    save_db()
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def set_estimate(opts)
+    new_estimate = opts[:new_estimate].to_f
+    opts[:issue_ids].each do |issue_id|
+      issue = select_issue { |i| i.id.start_with?(issue_id) }
+      if issue.estimate != new_estimate
+        issue.estimate = new_estimate
+        issue.log("Changed estimate to #{issue.estimate}")
+      puts issue.format_list
+      else
+        puts "Issue #{issue.short_id} already has estimate #{issue.estimate}."
       end
     end
     
@@ -445,8 +493,10 @@ SUB_COMMANDS = {
   "duplicate"     => "mark issue as duplicate of another issue",
   "edit"          => "edit an existing issue",
   "delete"        => "delete an issue",
+  "estimate"      => "calculate estimated man-hours for a milestone",
   "set-type"      => "set the type of an issue",
-  "set-milestone" => "set the milestone of an issue"}
+  "set-milestone" => "set the milestone of an issue",
+  "set-estimate"  => "set the estimated estimate for an issue (in hours)"}
 
 LeftFieldLength = 
   SUB_COMMANDS.collect { |key, value| key.length }.max
@@ -496,6 +546,8 @@ elsif cmd == "create"
   cmd_opts = 
     Trollop::options do
       opt :type, "create issue of specific type (e.g. bug, feature, improvement, task)", :short => 't', :type => String
+      opt :milestone, "specify the milestone of the new issue", :short => 'm', :type => String
+      opt :estimate, "specify the estimated effort", :short => 'e', :type => Float
     end
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 
@@ -519,14 +571,28 @@ elsif cmd == "edit"
       opt :description, "edit the issue description", :short => 'd'
     end
   cmd_opts[:issue_id] = get_issue_ids(1, "edit ID") 
+  
+elsif cmd == "estimate"
+  Trollop::options do
+    banner <<-EOL
+Usage:
+------
+issues estimate MILESTONE
 
+Options:
+--------
+EOL
+  end
+
+  ARGV.count > 0 || Trollop::die("Usage: issues estmiate MILSTONE")
+  cmd_opts[:milestone] = ARGV.shift
 
 elsif cmd == "set-type"
   Trollop::options do
     banner <<-EOL
 Usage:
 ------
-issues set-type {bug|improvement|task} ID
+issues set-type {bug|improvement|task} ID{,ID2,...}
 
 Options:
 --------
@@ -543,7 +609,7 @@ elsif cmd == "set-milestone"
     banner <<-EOL
 Usage:
 ------
-issues set-milestone MILESTONE
+issues set-milestone MILESTONE ID{,ID2,...}
 EOL
   end
 
@@ -551,6 +617,20 @@ EOL
   cmd_opts[:new_milestone] = new_milestone
   ARGV.count > 0 || Trollop::die("Please specify at least one issue ID")
   cmd_opts[:issue_ids] = get_issue_ids(-1, "set-milestone MILESTONE ID,...") 
+
+elsif cmd == "set-estimate"
+  Trollop::options do
+    banner <<-EOL
+Usage:
+------
+issues set-estimate ESTIMATE ID{,ID2,...}
+EOL
+  end
+
+  new_estimate = ARGV.shift || Trollop::die("Please specify an estimate in hours and at least one issue ID")
+  cmd_opts[:new_estimate] = new_estimate
+  ARGV.count > 0 || Trollop::die("Please specify at least one issue ID")
+  cmd_opts[:issue_ids] = get_issue_ids(-1, "set-estimate ESTIMATE ID{,ID2,...}") 
 
 elsif cmd == "delete"
   cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
@@ -578,10 +658,14 @@ case cmd
     Issues.resolve_issues(cmd_opts)
   when "edit"
     Issues.edit_issue(cmd_opts)
+  when "estimate"
+    Issues.estimate(cmd_opts)
   when "set-type"
     Issues.set_type(cmd_opts)
   when "set-milestone"
     Issues.set_milestone(cmd_opts)
+  when "set-estimate"
+    Issues.set_estimate(cmd_opts)
   when "delete"
     Issues.delete_issues(cmd_opts)
 end

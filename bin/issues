@@ -35,7 +35,7 @@ end
 #======================================================================================================================#
 
 class Issue
-  fattr :id, :created, :type, :title, :description, :status
+  fattr :id, :created, :type, :title, :description, :status, :milestone
   attr_accessor :history
   
 
@@ -81,8 +81,10 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#  
   
   def format_verbose
+    milestone = @milestone ? "[#{@milestone}]" : "[NO MILESTONE]"
+    
     puts PrettyComment.separator
-    puts PrettyComment.comment("#{@id[0,6]} #{@type.capitalize} (#{@status})  #{@created.to_s[0,16]}")
+    puts PrettyComment.comment("#{@id[0,6]} #{@type.capitalize} (#{@status}) #{milestone} #{@created.to_s[0,16]}")
     puts PrettyComment.comment("")
     puts PrettyComment.format_line(@title, "#", false, "#")
     
@@ -107,7 +109,9 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#
 
   def format_list
-    puts PrettyComment.format_line(@title, "#{short_id} (#{@type[0,1].capitalize})", true)
+    entry = @title
+    @milestone && entry += " [#{@milestone}]" 
+    puts PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true)
   end
 
 
@@ -262,9 +266,12 @@ class IssuesDb
 
       did_select_issue_types = opts[:type]       
       status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
+      did_select_milestone = opts[:milestone]
             
       issues = @issues_array.select do |issue| 
-        (status_regex =~ issue.status) && (issue.type == opts[:type] || !did_select_issue_types)
+        (status_regex =~ issue.status) \
+          && (issue.type == opts[:type] || !did_select_issue_types) \
+          && (issue.milestone == opts[:milestone] || !did_select_milestone)
       end
       issues.each {|issue| issue.method(list_proc).call}
     end
@@ -366,10 +373,30 @@ class IssuesDb
       issue = select_issue { |i| i.id.start_with?(issue_id) }
       if issue.type != new_type
         issue.type = new_type
-        issue.log("Changed typed to #{issue.type}")
+        issue.log("Changed type to #{issue.type}")
         issue.format_list
+        puts "Changed type of #{issue.short_id} to #{issue.type}"
       else
         puts "Issue #{issue.short_id} already of type #{issue.type}."
+      end
+    end
+    
+    save_db()
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def set_milestone(opts)
+    new_milestone = opts[:new_milestone]
+    opts[:issue_ids].each do |issue_id|
+      issue = select_issue { |i| i.id.start_with?(issue_id) }
+      if issue.milestone != new_milestone
+        issue.milestone = new_milestone
+        issue.log("Changed milestone to #{issue.milestone}")
+        issue.format_list
+      else
+        puts "Issue #{issue.short_id} already has milestone #{issue.milestone}."
       end
     end
     
@@ -411,14 +438,15 @@ EXECUTABLE_NAME=File.basename($0)
 DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
 SUB_COMMANDS = {
-  "list"      => "list issues",
-  "create"    => "create a new issue",
-  "resolve"   => "set status of issue to \"resolved\"",
-  "wontfix"   => "set status of issue to \"won't fix\"",
-  "duplicate" => "mark issue as duplicate of another issue",
-  "edit"      => "edit an existing issue",
-  "delete"    => "delete an issue",
-  "set-type"  => "set the type of an issue"}
+  "list"          => "list issues",
+  "create"        => "create a new issue",
+  "resolve"       => "set status of issue to \"resolved\"",
+  "wontfix"       => "set status of issue to \"won't fix\"",
+  "duplicate"     => "mark issue as duplicate of another issue",
+  "edit"          => "edit an existing issue",
+  "delete"        => "delete an issue",
+  "set-type"      => "set the type of an issue",
+  "set-milestone" => "set the milestone of an issue"}
 
 LeftFieldLength = 
   SUB_COMMANDS.collect { |key, value| key.length }.max
@@ -459,6 +487,7 @@ if cmd == 'list'
       opt :oldest, "list oldest issues first"
       opt :verbose, "verbose list of issues", :short => 'v'
       opt :type, "list issues of given type (bug, improvement, task, feature)", :short => 't', :type => String 
+      opt :milestone, "list issues for given milestone", :short => 'm', :type => String
     end
     
     ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
@@ -509,6 +538,19 @@ EOL
   cmd_opts[:new_type] = new_type
   ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
 
+elsif cmd == "set-milestone"
+  Trollop::options do
+    banner <<-EOL
+Usage:
+------
+issues set-milestone MILESTONE
+EOL
+  end
+
+  new_milestone = ARGV.shift || Trollop::die("Please specify a milestone and at least one issue ID")
+  cmd_opts[:new_milestone] = new_milestone
+  ARGV.count > 0 || Trollop::die("Please specify at least one issue ID")
+  cmd_opts[:issue_ids] = get_issue_ids(-1, "set-milestone MILESTONE ID,...") 
 
 elsif cmd == "delete"
   cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
@@ -538,6 +580,8 @@ case cmd
     Issues.edit_issue(cmd_opts)
   when "set-type"
     Issues.set_type(cmd_opts)
+  when "set-milestone"
+    Issues.set_milestone(cmd_opts)
   when "delete"
     Issues.delete_issues(cmd_opts)
 end

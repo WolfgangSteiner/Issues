@@ -197,17 +197,3 @@
   - !ruby/object:LogEntry
     date: 2012-08-24 14:19:33.638521000 +02:00
     message: Issue created
-- !ruby/object:Issue
-  created: 2012-08-25 20:04:40.114265000 +02:00
-  id: c4962a99afec569be01208cc8c41f949
-  status: open
-  title: This is a test
-  type: task
-  history:
-  - !ruby/object:LogEntry
-    date: 2012-08-25 20:04:40.114273000 +02:00
-    message: Issue created
-  - !ruby/object:LogEntry
-    date: 2012-08-25 20:05:03.290784000 +02:00
-    message: Changed milestone to 1.0a1
-  milestone: 1.0a1

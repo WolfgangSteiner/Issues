@@ -577,21 +577,25 @@ elsif cmd == "update"
   my_banner = <<-EOL
 Usage:
 ------
-issues update [--type (bug|improvement|task|feature)] [--milestone MILESTONE] [--estimate ESTIMATE] ID{,ID2,...}
+issues update \
+ [--type (bug|improvement|task|feature)]\
+ [--milestone MILESTONE]\
+ [--estimate ESTIMATE]\
+ ID{,ID2,...}
 
 Options:
 --------
 EOL
 
   cmd_opts = Trollop::options do
-    banner = my_banner
+    banner my_banner
     opt :type, "update the issue type", :short => 't', :type => String
     opt :milestone, "update the milestone", :short => 'm', :type => String
     opt :estimate,  "update the estimate", :short => 'e', :type => Float
   end
 
-  cmd_opts[:type] && %w{bug improvement task feature}.include?(cmd_opts[:type]) || Trollop::die("Please specify one of [bug, improvement, task, freature] as new issue type")
-  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Trollop::die(Banner)
+  cmd_opts[:type] && (%w{bug improvement task feature}.include?(cmd_opts[:type]) || Trollop::die("Please specify one of [bug, improvement, task, freature] as new issue type"))
+  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Trollop::die("You must specify one of (--type, --milestone, --estimate)")
 
   ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
 

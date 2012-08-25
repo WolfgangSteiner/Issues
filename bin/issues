@@ -408,28 +408,35 @@ class IssuesDb
     opts[:issue_ids].each do |issue_id|
       did_update = false
       issue = select_issue { |i| i.id.start_with?(issue_id) }
-      if new_type && issue.type != new_type
-        issue.type = new_type
-        issue.log("Changed type to #{issue.type}")
-        did_update = true
-      else
-        puts "Issue #{issue.short_id} already of type #{issue.type}."
+
+      if new_type 
+        if issue.type != new_type
+          issue.type = new_type
+          issue.log("Changed type to #{issue.type}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already of type #{issue.type}."
+        end
       end
 
-      if new_milestone && issue.milestone != new_milestone
-        issue.milestone = new_milestone
-        issue.log("Changed milestone to #{issue.milestone}")
-        did_update = true
-      else
-        puts "Issue #{issue.short_id} already in milestone #{issue.milestone}."
+      if new_milestone
+        if issue.milestone != new_milestone
+          issue.milestone = new_milestone
+          issue.log("Changed milestone to #{issue.milestone}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already in milestone #{issue.milestone}."
+        end
       end
 
-      if new_estimate && issue.estimate != new_estimate
-        issue.estimate = new_estimate
-        issue.log("Changed estimate to #{issue.estimate}")
-        did_update = true
-      else
-        puts "Issue #{issue.short_id} already has estimate #{issue.estimate}h."
+      if new_estimate
+        if issue.estimate != new_estimate
+          issue.estimate = new_estimate
+          issue.log("Changed estimate to #{issue.estimate}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already has estimate #{issue.estimate}h."
+        end
       end
 
       if did_update

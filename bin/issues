@@ -115,7 +115,11 @@ class Issue
 
   def format_list
     entry = @title
-    @milestone && entry += " [#{@milestone}]" 
+    estimate_milestone = []
+    @estimate && estimate_milestone << "#{@estimate}h"
+    @milestone && estimate_milestone << @milestone;
+    
+    estimate_milestone.count > 0 && entry << " [#{estimate_milestone.join(' => ')}]"
     PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true)
   end
 
@@ -396,59 +400,43 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-  def set_type(opts)
-    new_type = opts[:new_type]
+  def update(opts)
+    new_type = opts[:type]
+    new_milestone = opts[:milestone]
+    new_estimate = opts[:estimate]
+    
     opts[:issue_ids].each do |issue_id|
+      did_update = false
       issue = select_issue { |i| i.id.start_with?(issue_id) }
-      if issue.type != new_type
+      if new_type && issue.type != new_type
         issue.type = new_type
         issue.log("Changed type to #{issue.type}")
-        puts issue.format_list
-        puts "Changed type of #{issue.short_id} to #{issue.type}"
+        did_update = true
       else
         puts "Issue #{issue.short_id} already of type #{issue.type}."
       end
-    end
-    
-    save_db()
-  end
 
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-  def set_milestone(opts)
-    new_milestone = opts[:new_milestone]
-    opts[:issue_ids].each do |issue_id|
-      issue = select_issue { |i| i.id.start_with?(issue_id) }
-      if issue.milestone != new_milestone
+      if new_milestone && issue.milestone != new_milestone
         issue.milestone = new_milestone
         issue.log("Changed milestone to #{issue.milestone}")
-        puts issue.format_list
+        did_update = true
       else
-        puts "Issue #{issue.short_id} already has milestone #{issue.milestone}."
+        puts "Issue #{issue.short_id} already in milestone #{issue.milestone}."
       end
-    end
-    
-    save_db()
-  end
 
-
-#----------------------------------------------------------------------------------------------------------------------#
-
-  def set_estimate(opts)
-    new_estimate = opts[:new_estimate].to_f
-    opts[:issue_ids].each do |issue_id|
-      issue = select_issue { |i| i.id.start_with?(issue_id) }
-      if issue.estimate != new_estimate
+      if new_estimate && issue.estimate != new_estimate
         issue.estimate = new_estimate
         issue.log("Changed estimate to #{issue.estimate}")
-      puts issue.format_list
+        did_update = true
       else
-        puts "Issue #{issue.short_id} already has estimate #{issue.estimate}."
+        puts "Issue #{issue.short_id} already has estimate #{issue.estimate}h."
+      end
+
+      if did_update
+        puts issue.format_list
+        save_db()
       end
     end
-    
-    save_db()
   end
 
 
@@ -494,9 +482,7 @@ SUB_COMMANDS = {
   "edit"          => "edit an existing issue",
   "delete"        => "delete an issue",
   "estimate"      => "calculate estimated man-hours for a milestone",
-  "set-type"      => "set the type of an issue",
-  "set-milestone" => "set the milestone of an issue",
-  "set-estimate"  => "set the estimated estimate for an issue (in hours)"}
+  "update"        => "update issue fields."}
 
 LeftFieldLength = 
   SUB_COMMANDS.collect { |key, value| key.length }.max
@@ -587,50 +573,28 @@ EOL
   ARGV.count > 0 || Trollop::die("Usage: issues estmiate MILSTONE")
   cmd_opts[:milestone] = ARGV.shift
 
-elsif cmd == "set-type"
-  Trollop::options do
-    banner <<-EOL
+elsif cmd == "update"
+  my_banner = <<-EOL
 Usage:
 ------
-issues set-type {bug|improvement|task} ID{,ID2,...}
+issues update [--type (bug|improvement|task|feature)] [--milestone MILESTONE] [--estimate ESTIMATE] ID{,ID2,...}
 
 Options:
 --------
 EOL
+
+  cmd_opts = Trollop::options do
+    banner = my_banner
+    opt :type, "update the issue type", :short => 't', :type => String
+    opt :milestone, "update the milestone", :short => 'm', :type => String
+    opt :estimate,  "update the estimate", :short => 'e', :type => Float
   end
 
-  new_type = ARGV.shift
-  %w{bug improvement task feature}.include?(new_type) || Trollop::die("Please specify one of [bug, improvement, task] as new issue type")
-  cmd_opts[:new_type] = new_type
+  cmd_opts[:type] && %w{bug improvement task feature}.include?(cmd_opts[:type]) || Trollop::die("Please specify one of [bug, improvement, task, freature] as new issue type")
+  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Trollop::die(Banner)
+
   ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
 
-elsif cmd == "set-milestone"
-  Trollop::options do
-    banner <<-EOL
-Usage:
-------
-issues set-milestone MILESTONE ID{,ID2,...}
-EOL
-  end
-
-  new_milestone = ARGV.shift || Trollop::die("Please specify a milestone and at least one issue ID")
-  cmd_opts[:new_milestone] = new_milestone
-  ARGV.count > 0 || Trollop::die("Please specify at least one issue ID")
-  cmd_opts[:issue_ids] = get_issue_ids(-1, "set-milestone MILESTONE ID,...") 
-
-elsif cmd == "set-estimate"
-  Trollop::options do
-    banner <<-EOL
-Usage:
-------
-issues set-estimate ESTIMATE ID{,ID2,...}
-EOL
-  end
-
-  new_estimate = ARGV.shift || Trollop::die("Please specify an estimate in hours and at least one issue ID")
-  cmd_opts[:new_estimate] = new_estimate
-  ARGV.count > 0 || Trollop::die("Please specify at least one issue ID")
-  cmd_opts[:issue_ids] = get_issue_ids(-1, "set-estimate ESTIMATE ID{,ID2,...}") 
 
 elsif cmd == "delete"
   cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
@@ -660,12 +624,8 @@ case cmd
     Issues.edit_issue(cmd_opts)
   when "estimate"
     Issues.estimate(cmd_opts)
-  when "set-type"
-    Issues.set_type(cmd_opts)
-  when "set-milestone"
-    Issues.set_milestone(cmd_opts)
-  when "set-estimate"
-    Issues.set_estimate(cmd_opts)
+  when "update"
+    Issues.update(cmd_opts)
   when "delete"
     Issues.delete_issues(cmd_opts)
 end

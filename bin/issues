@@ -64,7 +64,9 @@ class Issue
 
   def copy_from(a_issue)
     self.class.fattrs.each do |a|
-      a_issue.send(a) && self.send(a, a_issue.send(a).dup)
+      value = a_issue.send(a)
+      new_value = value.is_a?(Numeric) || value == nil ? value : value.dup
+      a_issue.send(a) && self.send(a, new_value)
     end
   end  
       
@@ -114,13 +116,12 @@ class Issue
 #----------------------------------------------------------------------------------------------------------------------#
 
   def format_list
-    entry = @title
+    entry = @title.dup
     estimate_milestone = []
     @estimate && estimate_milestone << "#{@estimate}h"
     @milestone && estimate_milestone << @milestone;
-    
-    estimate_milestone.count > 0 && entry << " [#{estimate_milestone.join(' => ')}]"
-    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true)
+    suffix = estimate_milestone.count > 0 ? "[#{estimate_milestone.join(' => ')}]" : ""
+    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true, suffix)
   end
 
 
@@ -278,11 +279,12 @@ class IssuesDb
       did_select_issue_types = opts[:type]       
       status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
       did_select_milestone = opts[:milestone]
-            
+                  
       issues = @issues_array.select do |issue| 
         (status_regex =~ issue.status) \
           && (issue.type == opts[:type] || !did_select_issue_types) \
-          && (issue.milestone == opts[:milestone] || !did_select_milestone)
+          && (issue.milestone == opts[:milestone] || !did_select_milestone) \
+          && (issue.milestone == nil || opts["no-milestone"] == false)
       end
       issues.each {|issue| puts issue.method(list_proc).call}
     end
@@ -439,7 +441,7 @@ class IssuesDb
         end
       end
 
-      if did_update
+      if did_update == true
         puts issue.format_list
         save_db()
       end
@@ -531,6 +533,7 @@ if cmd == 'list'
       opt :verbose, "verbose list of issues", :short => 'v'
       opt :type, "list issues of given type (bug, improvement, task, feature)", :short => 't', :type => String 
       opt :milestone, "list issues for given milestone", :short => 'm', :type => String
+      opt "no-milestone", "list all issues not assigned to any milestone"
     end
     
     ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")

@@ -269,24 +269,29 @@ class IssuesDb
 
 
 #----------------------------------------------------------------------------------------------------------------------#
+  
+  def select_issues_with_opts(opts)
+    did_select_issue_types = opts[:type]       
+    status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
+    did_select_milestone = opts[:milestone]
+                  
+    return @issues_array.select do |issue| 
+      (status_regex =~ issue.status) \
+        && (issue.type == opts[:type] || !did_select_issue_types) \
+        && (issue.milestone == opts[:milestone] || !did_select_milestone) \
+        && (issue.milestone == nil || opts["no-milestone"] == false)
+    end
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
 
   def list_issues(opts)
     if opts[:issue_id]
       list_issue(opts[:issue_id])
     else
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
-
-      did_select_issue_types = opts[:type]       
-      status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
-      did_select_milestone = opts[:milestone]
-                  
-      issues = @issues_array.select do |issue| 
-        (status_regex =~ issue.status) \
-          && (issue.type == opts[:type] || !did_select_issue_types) \
-          && (issue.milestone == opts[:milestone] || !did_select_milestone) \
-          && (issue.milestone == nil || opts["no-milestone"] == false)
-      end
-      issues.each {|issue| puts issue.method(list_proc).call}
+      select_issues_with_opts(opts).each {|issue| puts issue.method(list_proc).call}
     end
   end
 
@@ -296,6 +301,14 @@ class IssuesDb
   def list_issue(issue_id)
     issue = select_issue {|i| i.id.start_with?(issue_id) }
     puts issue.format_verbose()
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def count_issues(opts)
+    num_issues = select_issues_with_opts(opts).count
+    puts "#{num_issues} issues."
   end
 
 
@@ -484,6 +497,7 @@ DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
 
 SUB_COMMANDS = {
   "list"          => "list issues",
+  "count"         => "count issues",
   "create"        => "create a new issue",
   "resolve"       => "set status of issue to \"resolved\"",
   "wontfix"       => "set status of issue to \"won't fix\"",
@@ -524,19 +538,21 @@ cmd ||= 'list'
 
 cmd_opts = {}
 
-if cmd == 'list'
+if cmd == 'list' || cmd == 'count'
   cmd_opts = 
     Trollop::options do
-      opt :all, "list all issues",            :short => 'a'
-      opt :newest, "list newest issues first"
-      opt :oldest, "list oldest issues first"
-      opt :verbose, "verbose list of issues", :short => 'v'
-      opt :type, "list issues of given type (bug, improvement, task, feature)", :short => 't', :type => String 
-      opt :milestone, "list issues for given milestone", :short => 'm', :type => String
-      opt "no-milestone", "list all issues not assigned to any milestone"
+      opt :all,    "#{cmd} all issues",            :short => 'a'
+      opt :newest, "#{cmd} newest issues first" if cmd == 'list'
+      opt :oldest, "#{cmd} oldest issues first" if cmd == 'list'
+      opt :verbose, "verbose list of issues", :short => 'v' if cmd == 'list'
+      opt :type, "#{cmd} issues of given type (bug, improvement, task, feature)", :short => 't', :type => String 
+      opt :milestone, "#{cmd} issues for given milestone", :short => 'm', :type => String
+      opt "no-milestone", "#{cmd} all issues not assigned to any milestone"
     end
     
-    ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
+    if cmd == 'list'
+      ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
+    end
 
 elsif cmd == "create"
   cmd_opts = 
@@ -632,6 +648,8 @@ case cmd
     Issues.create_issue(cmd_opts)
   when "list" 
     Issues.list_issues(cmd_opts)
+  when "count"
+    Issues.count_issues(cmd_opts)
   when "resolve", "wontfix", "duplicate"
     Issues.resolve_issues(cmd_opts)
   when "edit"

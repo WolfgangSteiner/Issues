@@ -326,6 +326,8 @@ class IssuesDb
       ["resolved", "Resolved"]
     when "wontfix"
       ["wontfix", "Won't fix"]
+    when "cantreproduce"
+      ["cantreproduce", "Can't reproduce"]
     when "duplicate"
       ["duplicate(#{duplicate_of_id})", "Duplicate"]
     end
@@ -501,6 +503,7 @@ SUB_COMMANDS = {
   "create"        => "create a new issue",
   "resolve"       => "set status of issue to \"resolved\"",
   "wontfix"       => "set status of issue to \"won't fix\"",
+  "cantreproduce" => "set status of issue to \"can't reproduce\"",
   "duplicate"     => "mark issue as duplicate of another issue",
   "edit"          => "edit an existing issue",
   "delete"        => "delete an issue",
@@ -564,7 +567,7 @@ elsif cmd == "create"
   cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
 
 
-elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate"
+elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cantreproduce"
   cmd_opts = 
     Trollop::options do
       opt :commit, "do a git commit", :short => 'c'
@@ -650,7 +653,7 @@ case cmd
     Issues.list_issues(cmd_opts)
   when "count"
     Issues.count_issues(cmd_opts)
-  when "resolve", "wontfix", "duplicate"
+  when "resolve", "wontfix", "duplicate", "cantreproduce"
     Issues.resolve_issues(cmd_opts)
   when "edit"
     Issues.edit_issue(cmd_opts)

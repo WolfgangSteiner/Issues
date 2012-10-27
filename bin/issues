@@ -10,11 +10,27 @@ require 'PrettyComment'
 require 'trollop'
 require 'tempfile'
 require 'yaml'
+require 'git'
 
 #YAML::ENGINE.yamler = 'psych'
 
 #======================================================================================================================#
 
+def git_get_current_branch()
+  current_branch = `git branch`.split(/\n/).find{ |l| l.start_with?("*") }
+  
+  if current_branch
+    current_branch =~ /\*\s+(.+)/
+    $~[1]
+  end 
+end
+
+
+#----------------------------------------------------------------------------------------------------------------------
+
+def is_issue_branch()
+  (git_get_current_branch() =~ /(feature|improvement|bug)\/[a-f0-9]{6}/) != nil
+end
 
 
 #======================================================================================================================#
@@ -338,9 +354,15 @@ class IssuesDb
     message = "#{message} issue #{resolved_issue.short_id}: #{resolved_issue.title}"
     puts message
     
-
     save_db()
-    opts[:commit] && exec("git commit -a -m \"#{message}\"")
+    opts[:commit] || opts[:close_branch] && system("git commit -a -m \"#{message}\"")
+
+    if opts[:close_branch] == true
+      issue_branch = git_get_current_branch()
+      system("git checkout dev")
+      system("git merge #{issue_branch}")
+      system("git branch -d #{issue_branch}")
+    end
   end
 
 
@@ -466,6 +488,18 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def start_branch(opts)
+    git_get_current_branch() == "dev" || Trollop::die("Must be on dev branch to start new issue branch.")
+    
+    issue_id = opts[:issue_id]
+    issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
+
+    system("git checkout -b #{issue.type}/#{issue.short_id}")
+  end
+    
+
+#----------------------------------------------------------------------------------------------------------------------#
+
 
 end
 
@@ -508,7 +542,8 @@ SUB_COMMANDS = {
   "edit"          => "edit an existing issue",
   "delete"        => "delete an issue",
   "estimate"      => "calculate estimated man-hours for a milestone",
-  "update"        => "update issue fields."}
+  "update"        => "update issue fields.",
+  "startbranch"   => "start a new git branch with to work on issue"}
 
 LeftFieldLength = 
   SUB_COMMANDS.collect { |key, value| key.length }.max
@@ -575,6 +610,9 @@ elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cant
     
   if cmd == "duplicate"
     cmd_opts[:issue_id], cmd_opts[:duplicate_of_id] = get_issue_ids(2, "duplicate ID(issue) ID(duplicate of)")
+  elsif cmd == "resolve" && is_issue_branch()
+    cmd_opts[:issue_id] = git_get_current_branch().split('/')[1]
+    cmd_opts[:close_branch] = true
   else
     cmd_opts[:issue_id] = get_issue_ids(1, "#{cmd} [-c] ID")
   end
@@ -632,6 +670,10 @@ EOL
 elsif cmd == "delete"
   cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
 
+
+elsif cmd == "startbranch"
+  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Trollop::die( "Please enter a title for the new issue!")
+
 else
   Trollop::die "unknown command #{cmd.inspect}"
 end
@@ -663,6 +705,8 @@ case cmd
     Issues.update(cmd_opts)
   when "delete"
     Issues.delete_issues(cmd_opts)
+  when "startbranch"
+    Issues.start_branch(cmd_opts)
 end
 
 

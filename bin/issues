@@ -355,7 +355,7 @@ class IssuesDb
     puts message
     
     save_db()
-    opts[:commit] || opts[:close_branch] && system("git commit -a -m \"#{message}\"")
+    (opts[:commit] || opts[:close_branch]) && system("git commit -a -m \"#{message}\"")
 
     if opts[:close_branch] == true
       issue_branch = git_get_current_branch()

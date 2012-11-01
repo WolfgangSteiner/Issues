@@ -29,7 +29,7 @@ end
 #----------------------------------------------------------------------------------------------------------------------
 
 def is_issue_branch()
-  (git_get_current_branch() =~ /(feature|improvement|bug)\/[a-f0-9]{6}/) != nil
+  (git_get_current_branch() =~ /(feature|improvement|bug|task)\/[a-f0-9]{6}/) != nil
 end
 
 

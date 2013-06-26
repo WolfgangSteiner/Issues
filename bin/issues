@@ -360,7 +360,7 @@ class IssuesDb
       system "git add .issues"
       system "git commit -m \"#{message}\""
 
-    elsif opts[:close_branch] == true
+    if opts[:close_branch] == true
       issue_branch = git_get_current_branch()
       system "git checkout dev"
       system "git merge #{issue_branch}"

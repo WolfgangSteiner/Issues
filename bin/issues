@@ -617,6 +617,7 @@ elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cant
   elsif cmd == "resolve" && is_issue_branch()
     cmd_opts[:issue_id] = git_get_current_branch().split('/')[1]
     cmd_opts[:close_branch] = true
+    cmd_opts[:commit] = true
   else
     cmd_opts[:issue_id] = get_issue_ids(1, "#{cmd} [-c] ID")
   end

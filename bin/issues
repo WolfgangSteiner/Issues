@@ -359,7 +359,8 @@ class IssuesDb
     if opts[:commit]
       system "git add .issues"
       system "git commit -m \"#{message}\""
-
+    end
+    
     if opts[:close_branch] == true
       issue_branch = git_get_current_branch()
       system "git checkout dev"

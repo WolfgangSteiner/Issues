@@ -677,7 +677,7 @@ elsif cmd == "delete"
 
 
 elsif cmd == "startbranch"
-  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Trollop::die( "Please enter a title for the new issue!")
+  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Trollop::die( "Please enter an id for the issue to work on in the new branch!")
 
 else
   Trollop::die "unknown command #{cmd.inspect}"

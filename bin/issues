@@ -134,10 +134,12 @@ class Issue
   def format_list
     entry = @title.dup
     estimate_milestone = []
+    estimate_str = @estimate ? sprintf("%.2f", @estimate).rjust(4) + "h" : "     "
+    milestone_str = @milestone ? @milestone.ljust(10) : "UNASSIGNED"
     @estimate && estimate_milestone << "#{@estimate}h"
     @milestone && estimate_milestone << @milestone;
     suffix = estimate_milestone.count > 0 ? "[#{estimate_milestone.join(' => ')}]" : ""
-    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize})", true, suffix)
+    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize}) #{milestone_str} #{estimate_str}", true) 
   end
 
 
@@ -289,14 +291,30 @@ class IssuesDb
   def select_issues_with_opts(opts)
     did_select_issue_types = opts[:type]       
     status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
-    did_select_milestone = opts[:milestone]
+    did_select_milestone = opts[:milestone] != nil
+    milestone = opts[:milestone]
                   
     return @issues_array.select do |issue| 
       (status_regex =~ issue.status) \
         && (issue.type == opts[:type] || !did_select_issue_types) \
-        && (issue.milestone == opts[:milestone] || !did_select_milestone) \
+        && (issue.milestone == opts[:milestone] \
+            || !did_select_milestone \
+            || milestone.end_with?(".") && issue.milestone.start_with?(milestone)) \
         && (issue.milestone == nil || opts["no-milestone"] == false)
     end
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def sort_none(a, b)
+    return 0
+  end
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def sort_milestone(a, b)
+    return a.milestone <=> b.milestone
   end
 
 
@@ -305,9 +323,12 @@ class IssuesDb
   def list_issues(opts)
     if opts[:issue_id]
       list_issue(opts[:issue_id])
+      sort_proc = "sort_milestone"
     else
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
-      select_issues_with_opts(opts).each {|issue| puts issue.method(list_proc).call}
+      select_issues_with_opts(opts).\
+        sort {|a,b| sort_milestone(a,b)}.\
+        each {|issue| puts issue.method(list_proc).call}
     end
   end
 

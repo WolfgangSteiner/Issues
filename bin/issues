@@ -98,7 +98,7 @@ class Issue
 
 #----------------------------------------------------------------------------------------------------------------------#  
   
-  def format_verbose
+  def format_verbose(opts)
     milestone = @milestone ? "#{@milestone}" : "NO MILESTONE"
     estimate = @estimate ? "#{@estimate}h" : "NO ESTIMATE"
     milestone_estimate = "[#{estimate}, #{milestone}]"
@@ -131,15 +131,21 @@ class Issue
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-  def format_list
+  def format_list(opts)
     entry = @title.dup
-    estimate_milestone = []
-    estimate_str = @estimate ? sprintf("%.2f", @estimate).rjust(4) + "h" : "     "
-    milestone_str = @milestone ? @milestone.ljust(10) : "UNASSIGNED"
-    @estimate && estimate_milestone << "#{@estimate}h"
-    @milestone && estimate_milestone << @milestone;
-    suffix = estimate_milestone.count > 0 ? "[#{estimate_milestone.join(' => ')}]" : ""
-    PrettyComment.format_line(entry, "#{short_id} (#{@type[0,1].capitalize}) #{milestone_str} #{estimate_str}", true) 
+    info_string = "#{short_id} (#{@type[0,1].capitalize})"
+
+    if opts[:list_milestone] == true
+      info_string << " " << (@milestone ? @milestone.ljust(10) : "UNASSIGNED")
+    end
+
+    if opts[:list_estimate] == true
+      info_string << " " << (@estimate ? sprintf("%.2fh", @estimate).rjust(4) : "     ")
+    end
+
+    #suffix = estimate_milestone.count > 0 ? "[#{estimate_milestone.join(' => ')}]" : ""
+    
+    PrettyComment.format_line(entry, info_string, true) 
   end
 
 
@@ -308,6 +314,19 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def has_open_issues_with_milestone?
+    @issues_array.any? { |issue| issue.status == "open" && issue.milestone != nil }
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def has_open_issues_with_estimate?
+    @issues_array.any? { |issue| issue.status == "open" && issue.estimate != nil }
+  end
+
+#----------------------------------------------------------------------------------------------------------------------#
+
   def sort_none(a, b)
     return 0
   end
@@ -329,7 +348,7 @@ class IssuesDb
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
       select_issues_with_opts(opts).\
         sort {|a,b| sort_milestone(a,b)}.\
-        each {|issue| puts issue.method(list_proc).call}
+        each {|issue| puts issue.method(list_proc).call(opts)}
     end
   end
 
@@ -451,7 +470,7 @@ class IssuesDb
     issues_without_estimates = @issues_array.select { |i| i.milestone == milestone && i.status == "open" && !i.estimate }
     if issues_without_estimates.count > 0 
       puts PrettyComment.h3("Warning: Found issues without estimates")
-      issues_without_estimates.each {|i| puts i.format_list}
+      issues_without_estimates.each {|i| puts i.format_list(opts)}
       puts PrettyComment.separator("-")
       puts
     end
@@ -505,7 +524,7 @@ class IssuesDb
       end
 
       if did_update == true
-        puts issue.format_list
+        puts issue.format_list(opts)
         save_db()
       end
     end
@@ -714,6 +733,8 @@ cmd_opts[:cmd] = cmd
 #======================================================================================================================#
 
 Issues = IssuesDb.new(DATABASE_NAME)
+cmd_opts[:list_estimate] = Issues.has_open_issues_with_estimate?()
+cmd_opts[:list_milestone] = Issues.has_open_issues_with_milestone?()
 
 case cmd
   when "create" 

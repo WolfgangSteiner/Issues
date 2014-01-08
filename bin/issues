@@ -299,7 +299,8 @@ class IssuesDb
         && (issue.type == opts[:type] || !did_select_issue_types) \
         && (issue.milestone == opts[:milestone] \
             || !did_select_milestone \
-            || milestone.end_with?(".") && issue.milestone.start_with?(milestone)) \
+            || milestone.end_with?(".") && issue.milestone.start_with?(milestone)\
+            || milestone.start_with?(".") && issues.milestone.end_with?(milestone)) \
         && (issue.milestone == nil || opts["no-milestone"] == false)
     end
   end

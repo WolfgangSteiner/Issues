@@ -33,6 +33,13 @@ def is_issue_branch()
 end
 
 
+#----------------------------------------------------------------------------------------------------------------------
+
+def max(a,b)
+  a > b ? a : b
+end
+
+
 #======================================================================================================================#
 
 class LogEntry
@@ -136,7 +143,8 @@ class Issue
     info_string = "#{short_id} (#{@type[0,1].capitalize})"
 
     if opts[:list_milestone] == true
-      info_string << " " << (@milestone ? @milestone.ljust(10) : "UNASSIGNED")
+      width = opts[:milestone_column_width]
+      info_string << " " << (@milestone ? @milestone.ljust(width) : "UNASSIGNED".ljust(width))
     end
 
     if opts[:list_estimate] == true
@@ -324,6 +332,18 @@ class IssuesDb
   def has_open_issues_with_estimate?
     @issues_array.any? { |issue| issue.status == "open" && issue.estimate != nil }
   end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
+  def milestone_column_width(array = @issues_array)
+    result = 0
+
+    array.each { |issue| issue.milestone != nil && result = max(issue.milestone.length, result) }
+
+    result
+  end
+
 
 #----------------------------------------------------------------------------------------------------------------------#
 
@@ -734,6 +754,7 @@ cmd_opts[:cmd] = cmd
 
 Issues = IssuesDb.new(DATABASE_NAME)
 cmd_opts[:list_estimate] = Issues.has_open_issues_with_estimate?()
+cmd_opts[:milestone_column_width] = Issues.milestone_column_width()
 cmd_opts[:list_milestone] = Issues.has_open_issues_with_milestone?()
 
 case cmd

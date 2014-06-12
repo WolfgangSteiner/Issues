@@ -362,7 +362,7 @@ class IssuesDb
 
   def list_issues(opts)
     if opts[:issue_id]
-      list_issue(opts[:issue_id])
+      list_issue(opts)
       sort_proc = "sort_milestone"
     else
       list_proc = opts[:verbose] ? "format_verbose" : "format_list"
@@ -375,9 +375,10 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
-  def list_issue(issue_id)
+  def list_issue(opts)
+    issue_id = opts[:issue_id]
     issue = select_issue {|i| i.id.start_with?(issue_id) }
-    puts issue.format_verbose()
+    puts issue.format_verbose(opts)
   end
 
 
@@ -482,12 +483,38 @@ class IssuesDb
 
 #----------------------------------------------------------------------------------------------------------------------#
 
+  def select_issue_for_estimate?(issue, milestone)
+    issue.milestone != nil \
+    && issue.status == "open" \
+    && (issue.milestone == milestone \
+       || milestone.start_with?(".") && issue.milestone.end_with?(milestone) \
+       || milestone.end_with?(".") && issue.milestone.start_with?(milestone) )
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+  
+  def get_milestones_for_pattern(pattern)
+    result_hash = {}    
+    issues_array.each { |i| select_issue_for_estimate?(i, pattern) && result_hash[i.milestone] = true }
+    result_hash.keys.sort
+  end
+
+
+#----------------------------------------------------------------------------------------------------------------------#
+
   def estimate(opts)
     milestone = opts[:milestone]
     total = 0.0
     
-    issues_to_estimate = @issues_array.select { |i| i.milestone == milestone && i.status == "open" }
-    issues_without_estimates = @issues_array.select { |i| i.milestone == milestone && i.status == "open" && !i.estimate }
+    issues_to_estimate = @issues_array.select { |i| select_issue_for_estimate?(i, milestone) }
+    issues_without_estimates = @issues_array.select { |i| select_issue_for_estimate?(i, milestone) && !i.estimate }
+
+    if issues_to_estimate.empty? 
+      puts "No open issues found for milestone " << milestone << "!"
+      exit
+    end
+
     if issues_without_estimates.count > 0 
       puts PrettyComment.h3("Warning: Found issues without estimates")
       issues_without_estimates.each {|i| puts i.format_list(opts)}
@@ -497,7 +524,11 @@ class IssuesDb
     
     issues_to_estimate.each { |i| (i.estimate && total += i.estimate) }
     
-    puts "Milestone #{milestone} will take #{total} man-hours to complete."
+    milestones = get_milestones_for_pattern(milestone)
+
+    result_str = "Milestone" << (milestones.length > 1 ? "s" : "")
+
+    puts result_str << " #{milestones.join(", ")} will take #{total} man-hours to complete."
     puts
   end
 

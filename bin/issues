@@ -4,7 +4,7 @@
 require 'rubygems'
 require 'fattr'
 require 'io/console'
-require 'SecureRandom'
+require 'securerandom'
 require 'PrettyComment'
 require 'trollop'
 require 'yaml'

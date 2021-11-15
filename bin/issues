@@ -47,6 +47,7 @@ end
 def edit_string(aString)
   editor = get_system_editor
   tempfile_name = "/tmp/issues-" << SecureRandom.hex.force_encoding("UTF-8")
+  File.write(tempfile_name, aString)
   system("#{editor} #{tempfile_name}")
   new_string = File.read(tempfile_name)
   File.unlink(tempfile_name)

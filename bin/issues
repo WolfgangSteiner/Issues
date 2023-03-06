@@ -6,7 +6,7 @@ require 'fattr'
 require 'io/console'
 require 'securerandom'
 require 'PrettyComment'
-require 'trollop'
+require 'optimist'
 require 'yaml'
 require 'git'
 
@@ -205,7 +205,10 @@ class IssuesDb
 
   def initialize(database_file)
     @database_file = database_file
-    @issues_array = FileTest.exists?(database_file) && YAML.load_file(database_file) || []
+    @issues_array = []
+    if FileTest.exists?(database_file)
+      @issues_array = YAML.safe_load_file(database_file, permitted_classes: [Issue, Date, Time, LogEntry])
+    end
   end
 
 #-------------------------------------------------------------------------------------------
@@ -549,7 +552,7 @@ class IssuesDb
 #-------------------------------------------------------------------------------------------
 
   def start_branch(opts)
-    git_get_current_branch() == "dev" || Trollop::die("Must be on dev branch to start new issue branch.")
+    git_get_current_branch() == "dev" || Optimist::die("Must be on dev branch to start new issue branch.")
 
     issue_id = opts[:issue_id]
     issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
@@ -610,7 +613,7 @@ SubCommandHelp =
   SUB_COMMANDS.collect {|key,value| "  #{key.ljust(LeftFieldLength)}  #{value}"}.join("\n")
 
 
-global_opts = Trollop::options do
+global_opts = Optimist::options do
   banner <<-EOL
 issues: lightweight distributed issue management.
 
@@ -636,7 +639,7 @@ cmd_opts = {}
 
 if cmd == 'list' || cmd == 'count'
   cmd_opts =
-    Trollop::options do
+    Optimist::options do
       opt :all,    "#{cmd} all issues",            :short => 'a'
       opt :newest, "#{cmd} newest issues first" if cmd == 'list'
       opt :oldest, "#{cmd} oldest issues first" if cmd == 'list'
@@ -652,17 +655,17 @@ if cmd == 'list' || cmd == 'count'
 
 elsif cmd == "create"
   cmd_opts =
-    Trollop::options do
+    Optimist::options do
       opt :type, "create issue of specific type (e.g. bug, feature, improvement, task)", :short => 't', :type => String
       opt :milestone, "specify the milestone of the new issue", :short => 'm', :type => String
       opt :estimate, "specify the estimated effort", :short => 'e', :type => Float
     end
-  cmd_opts[:title] = ARGV.shift || Trollop::die( "Please enter a title for the new issue!")
+  cmd_opts[:title] = ARGV.shift || Optimist::die( "Please enter a title for the new issue!")
 
 
 elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cantreproduce"
   cmd_opts =
-    Trollop::options do
+    Optimist::options do
       opt :commit, "do a git commit", :short => 'c'
     end
 
@@ -679,13 +682,13 @@ elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cant
 
 elsif cmd == "edit"
   cmd_opts =
-    Trollop::options do
+    Optimist::options do
       opt :description, "edit the issue description", :short => 'd'
     end
   cmd_opts[:issue_id] = get_issue_ids(1, "edit ID")
 
 elsif cmd == "estimate"
-  Trollop::options do
+  Optimist::options do
     banner <<-EOL
 Usage:
 ------
@@ -696,7 +699,7 @@ Options:
 EOL
   end
 
-  ARGV.count > 0 || Trollop::die("Usage: issues estmiate MILSTONE")
+  ARGV.count > 0 || Optimist::die("Usage: issues estmiate MILSTONE")
   cmd_opts[:milestone] = ARGV.shift
 
 elsif cmd == "update"
@@ -713,15 +716,15 @@ Options:
 --------
 EOL
 
-  cmd_opts = Trollop::options do
+  cmd_opts = Optimist::options do
     banner my_banner
     opt :type, "update the issue type", :short => 't', :type => String
     opt :milestone, "update the milestone", :short => 'm', :type => String
     opt :estimate,  "update the estimate", :short => 'e', :type => Float
   end
 
-  cmd_opts[:type] && (%w{bug improvement task feature}.include?(cmd_opts[:type]) || Trollop::die("Please specify one of [bug, improvement, task, freature] as new issue type"))
-  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Trollop::die("You must specify one of (--type, --milestone, --estimate)")
+  cmd_opts[:type] && (%w{bug improvement task feature}.include?(cmd_opts[:type]) || Optimist::die("Please specify one of [bug, improvement, task, freature] as new issue type"))
+  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Optimist::die("You must specify one of (--type, --milestone, --estimate)")
 
   ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
 
@@ -731,10 +734,10 @@ elsif cmd == "delete"
 
 
 elsif cmd == "startbranch"
-  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Trollop::die( "Please enter an id for the issue to work on in the new branch!")
+  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Optimist::die( "Please enter an id for the issue to work on in the new branch!")
 
 else
-  Trollop::die "unknown command #{cmd.inspect}"
+  Optimist::die "unknown command #{cmd.inspect}"
 end
 
 

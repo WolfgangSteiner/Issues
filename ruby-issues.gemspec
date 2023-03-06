@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.email       = 'wolfgang.steiner@gmail.com'
   s.executables = ["issues", "todos"]
   s.homepage    = 'https://github.com/WolfgangSteiner/Issues'
-  s.add_dependency('PrettyComment', '>= 0.1.2')
-  s.add_dependency('trollop', '>= 1.16.2')
-  s.add_dependency('fattr', '>= 2.2.1')
+  s.add_runtime_dependency('PrettyComment', '~> 0.1', '>= 0.1.2')
+  s.add_runtime_dependency('optimist', '~> 3.0', '>= 3.0.1')
+  s.add_runtime_dependency('fattr', '~> 2.4', '>= 2.4.0')
 end

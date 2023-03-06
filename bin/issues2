@@ -1,0 +1,777 @@
+#!/usr/bin/env ruby
+# encoding: utf-8
+#===========================================================================================
+require 'rubygems'
+require 'fattr'
+require 'io/console'
+require 'securerandom'
+require 'PrettyComment'
+require 'optimist'
+require 'yaml'
+require 'git'
+
+#YAML::ENGINE.yamler = 'psych'
+
+#===========================================================================================
+
+def git_get_current_branch()
+  current_branch = `git branch`.split(/\n/).find{ |l| l.start_with?("*") }
+
+  if current_branch
+    current_branch =~ /\*\s+(.+)/
+    $~[1]
+  end
+end
+
+#-------------------------------------------------------------------------------------------
+
+def is_issue_branch()
+  (git_get_current_branch() =~ /(feature|improvement|bug|task)\/[a-f0-9]{6}/) != nil
+end
+
+#-------------------------------------------------------------------------------------------
+
+def max(a,b)
+  a > b ? a : b
+end
+
+#-------------------------------------------------------------------------------------------
+
+def get_system_editor()
+  default_editor = 'editor'
+  ENV['EDITOR'] || `git var GIT_EDITOR`.rstrip || default_editor
+end
+
+#-------------------------------------------------------------------------------------------
+
+def edit_string(aString)
+  editor = get_system_editor
+  tempfile_name = "/tmp/issues-" << SecureRandom.hex.force_encoding("UTF-8")
+  system("#{editor} #{tempfile_name}")
+  new_string = File.read(tempfile_name)
+  File.unlink(tempfile_name)
+  new_string
+end
+
+#===========================================================================================
+
+class LogEntry
+  fattr :date, :message
+
+  def initialize(message)
+    @date = Time.new
+    @message = message.dup
+  end
+end
+
+
+#===========================================================================================
+
+class Issue
+  fattr :id, :created, :type, :title, :description, :status, :milestone, :estimate
+  attr_accessor :history
+
+#-------------------------------------------------------------------------------------------
+
+  def initialize
+    @history = []
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def self.createNewIssue(title, type="bug")
+    newIssue = Issue.new
+    newIssue.id = SecureRandom.hex.force_encoding("UTF-8")
+    newIssue.created  = Time.new
+    newIssue.title = title
+    newIssue.status = "open"
+    newIssue.type = type
+    newIssue.history = [LogEntry.new("Issue created")]
+    newIssue
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def copy_from(a_issue)
+    self.class.fattrs.each do |a|
+      value = a_issue.send(a)
+      new_value = value.is_a?(Numeric) || value == nil ? value : value.dup
+      a_issue.send(a) && self.send(a, new_value)
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def log(message)
+    @history ||= []
+    @history << LogEntry.new(message)
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def format_verbose(opts)
+    milestone = @milestone ? "#{@milestone}" : "NO MILESTONE"
+    estimate = @estimate ? "#{@estimate}h" : "NO ESTIMATE"
+    milestone_estimate = "[#{estimate}, #{milestone}]"
+
+    result = []
+    result << PrettyComment.separator
+    result << PrettyComment.comment("#{@id[0,6]} #{@type.capitalize} (#{@status}) #{milestone_estimate} #{@created.to_s[0,16]}")
+    result << PrettyComment.comment("")
+    result << PrettyComment.format_line(@title, "#", false, "#")
+
+    if @description
+      result << PrettyComment.sub_heading("Description:")
+      @description.split("\n").each do |l|
+        result << PrettyComment.format_line(l, "#", false, "#")
+      end
+    end
+
+    if @history && @history.count > 0
+      result << PrettyComment.sub_heading("Log:")
+      @history.each { |l| result << PrettyComment.format_line("#{l.message}", "# #{l.date.to_s[0,16]}", true, "#", "#") }
+    end
+
+    result << PrettyComment.separator
+    result << ""
+    result << ""
+
+    result.join("\n")
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def format_list(opts)
+    entry = @title.dup
+    info_string = "#{short_id} (#{@type[0,1].capitalize})"
+
+    if opts[:list_milestone] == true
+      width = opts[:milestone_column_width]
+      info_string << " " << (@milestone ? @milestone.ljust(width) : "UNASSIGNED".ljust(width))
+    end
+
+    if opts[:list_estimate] == true
+      info_string << " " << (@estimate ? sprintf("%.2fh", @estimate).rjust(4) : "     ")
+    end
+
+    #suffix = estimate_milestone.count > 0 ? "[#{estimate_milestone.join(' => ')}]" : ""
+
+    PrettyComment.format_line(entry, info_string, true)
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def edit_description
+    new_description = edit_string(@description)
+
+    if new_description != @description
+      @description = new_description.dup
+      return true
+    end
+
+    return false
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def edit_all
+    original_yaml = self.to_yaml
+    new_yaml = edit_string(original_yaml)
+
+    if (new_yaml != original_yaml)
+      self.copy_from(YAML::parse(new_string))
+      return true
+    end
+
+    return false
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def short_id
+    @id[0,6]
+  end
+
+end
+
+#===========================================================================================
+# Main Program Logic
+#===========================================================================================
+
+class IssuesDb
+  fattr :issues_array
+
+#-------------------------------------------------------------------------------------------
+
+  def initialize(database_file)
+    @database_file = database_file
+    @issues_array = []
+    if FileTest.exists?(database_file)
+      @issues_array = YAML.safe_load_file(database_file, permitted_classes: [Issue, Date, Time, LogEntry])
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def select_issues(&select_proc)
+    return @issues_array.select(&select_proc)
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def select_issue(&select_proc)
+    result = select_issues(&select_proc)
+
+    if result.count == 1
+      return result[0]
+
+    elsif result.count > 1
+      puts "Found more than one issue that match this query:"
+      result.each{|i| puts("#{i.id} #{i.title}")}
+      exit
+
+    else
+      puts "Error: No issue found for query."
+      exit
+    end
+
+    nil
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def has_issue(issue_id)
+    @issues_array.any? { |issue| issue.id.start_with?(issue_id) }
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def save_db()
+    FileTest.exists?('.issues') || Dir.mkdir('.issues')
+    File.open(@database_file, 'w' ) { |out| YAML.dump(@issues_array, out) }
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def determine_issue_type(opts)
+    issue_types = %w{bug improvement task feature}
+    issue_type = opts[:type] ? opts[:type].downcase : nil
+
+    issue_type && (return issue_type)
+
+    case opts[:title]
+    when /\b(improve)/i
+      "improvement"
+    when /\b(implement)/i
+      "feature"
+    when /\b(fix|bug|crash)/i
+      "bug"
+    else
+      "task"
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def create_issue(opts)
+    type = determine_issue_type(opts)
+    new_issue = Issue.createNewIssue(opts[:title], type)
+    new_issue.milestone = opts[:milestone]
+    new_issue.estimate = opts[:estimate]
+    @issues_array << new_issue
+    save_db()
+    puts "Created issue #{new_issue.short_id} #{new_issue.title}"
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def select_issues_with_opts(opts)
+    did_select_issue_types = opts[:type]
+    status_regex = opts[:all] ? /^(open|resolved|duplicate|wontfix)/ : /^open$/
+    did_select_milestone = opts[:milestone] != nil
+    milestone = opts[:milestone]
+
+    return @issues_array.select do |issue|
+      (status_regex =~ issue.status) \
+        && (issue.type == opts[:type] || !did_select_issue_types) \
+        && (issue.milestone == opts[:milestone] \
+            || !did_select_milestone \
+            || milestone.end_with?(".") && issue.milestone.start_with?(milestone)\
+            || milestone.start_with?(".") && issue.milestone.end_with?(milestone)) \
+        && (issue.milestone == nil || opts["no-milestone"] == false)
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def has_open_issues_with_milestone?
+    @issues_array.any? { |issue| issue.status == "open" && issue.milestone != nil }
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def has_open_issues_with_estimate?
+    @issues_array.any? { |issue| issue.status == "open" && issue.estimate != nil }
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def milestone_column_width(array = @issues_array)
+    result = 0
+
+    array.each { |issue| issue.milestone != nil && result = max(issue.milestone.length, result) }
+
+    result
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def sort_none(a, b)
+    return 0
+  end
+#-------------------------------------------------------------------------------------------
+
+  def sort_milestone(a, b)
+    return a.milestone <=> b.milestone
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def list_issues(opts)
+    if opts[:issue_id]
+      list_issue(opts)
+      sort_proc = "sort_milestone"
+    else
+      list_proc = opts[:verbose] ? "format_verbose" : "format_list"
+      select_issues_with_opts(opts).\
+        sort {|a,b| sort_milestone(a,b)}.\
+        each {|issue| puts issue.method(list_proc).call(opts)}
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def list_issue(opts)
+    issue_id = opts[:issue_id]
+    issue = select_issue {|i| i.id.start_with?(issue_id) }
+    puts issue.format_verbose(opts)
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def count_issues(opts)
+    num_issues = select_issues_with_opts(opts).count
+    puts "#{num_issues} issues."
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def resolve_issues(opts)
+    issue_id = opts[:issue_id]
+    resolved_issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
+
+    duplicate_of_id = opts[:cmd] == "duplicate" && select_issue {|i| i.id.start_with?(opts[:duplicate_of_id]) }.id
+
+    status, message =
+    case opts[:cmd]
+    when "resolve"
+      ["resolved", "Resolved"]
+    when "wontfix"
+      ["wontfix", "Won't fix"]
+    when "cantreproduce"
+      ["cantreproduce", "Can't reproduce"]
+    when "duplicate"
+      ["duplicate(#{duplicate_of_id})", "Duplicate"]
+    end
+
+    resolved_issue.status = status
+    resolved_issue.log "Changed status to #{status}"
+
+    message = "#{message} issue #{resolved_issue.short_id}: #{resolved_issue.title}"
+    puts message
+
+    save_db()
+
+    if opts[:commit]
+      system "git add .issues"
+      system "git commit -m \"#{message}\""
+    end
+
+    if opts[:close_branch] == true
+      issue_branch = git_get_current_branch()
+      system "git checkout dev"
+      system "git merge #{issue_branch}"
+      system "git branch -d #{issue_branch}"
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def delete_issues(opts)
+    delete_issues = []
+
+    opts[:issue_ids].each do |issue_id|
+      delete_issues << select_issue{|i| i.id.start_with?(issue_id)}
+    end
+
+    puts "Ok to delete issues: "
+    delete_issues.each { |issue| puts "#{issue.short_id} \"#{issue.title}\"" }
+    puts "[y/N]"
+
+    answer = STDIN.getch
+
+    if /y/i =~ answer
+      @issues_array -= delete_issues
+      save_db()
+
+      if delete_issues.count == 1
+        puts "Removed issue #{delete_issues[0].short_id} \"#{delete_issues[0].title}\" from database."
+      else
+        puts "Removed issues "
+        delete_issues.each { |issue| puts "#{issue.short_id} \"#{issue.title}\"" }
+        puts "from database."
+      end
+    end
+
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def edit_issue(opts)
+    issue_id = opts[:issue_id]
+    issue = select_issue { |i| i.id.start_with?(issue_id) }
+
+    did_change_issue = false
+
+    if (opts[:description])
+      did_change_issue = issue.edit_description && issue.log("Edited description")
+    else
+      did_change_issue = issue.edit_all && issue.log("Edited issue")
+    end
+
+    did_change_issue && save_db()
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def select_issue_for_estimate?(issue, milestone)
+    issue.milestone != nil \
+    && issue.status == "open" \
+    && (issue.milestone == milestone \
+       || milestone.start_with?(".") && issue.milestone.end_with?(milestone) \
+       || milestone.end_with?(".") && issue.milestone.start_with?(milestone) )
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def get_milestones_for_pattern(pattern)
+    result_hash = {}
+    issues_array.each { |i| select_issue_for_estimate?(i, pattern) && result_hash[i.milestone] = true }
+    result_hash.keys.sort
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def estimate(opts)
+    milestone = opts[:milestone]
+    total = 0.0
+
+    issues_to_estimate = @issues_array.select { |i| select_issue_for_estimate?(i, milestone) }
+    issues_without_estimates = @issues_array.select { |i| select_issue_for_estimate?(i, milestone) && !i.estimate }
+
+    if issues_to_estimate.empty?
+      puts "No open issues found for milestone " << milestone << "!"
+      exit
+    end
+
+    if issues_without_estimates.count > 0
+      puts PrettyComment.h3("Warning: Found issues without estimates")
+      issues_without_estimates.each {|i| puts i.format_list(opts)}
+      puts PrettyComment.separator("-")
+      puts
+    end
+
+    issues_to_estimate.each { |i| (i.estimate && total += i.estimate) }
+
+    milestones = get_milestones_for_pattern(milestone)
+
+    result_str = "Milestone" << (milestones.length > 1 ? "s" : "")
+
+    puts result_str << " #{milestones.join(", ")} will take #{total} man-hours to complete."
+    puts
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def update(opts)
+    new_type = opts[:type]
+    new_milestone = opts[:milestone]
+    new_estimate = opts[:estimate]
+
+    opts[:issue_ids].each do |issue_id|
+      did_update = false
+      issue = select_issue { |i| i.id.start_with?(issue_id) }
+
+      if new_type
+        if issue.type != new_type
+          issue.type = new_type
+          issue.log("Changed type to #{issue.type}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already of type #{issue.type}."
+        end
+      end
+
+      if new_milestone
+        if issue.milestone != new_milestone
+          issue.milestone = new_milestone
+          issue.log("Changed milestone to #{issue.milestone}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already in milestone #{issue.milestone}."
+        end
+      end
+
+      if new_estimate
+        if issue.estimate != new_estimate
+          issue.estimate = new_estimate
+          issue.log("Changed estimate to #{issue.estimate}")
+          did_update = true
+        else
+          puts "Issue #{issue.short_id} already has estimate #{issue.estimate}h."
+        end
+      end
+
+      if did_update == true
+        puts issue.format_list(opts)
+        save_db()
+      end
+    end
+  end
+
+#-------------------------------------------------------------------------------------------
+
+  def start_branch(opts)
+    git_get_current_branch() == "dev" || Optimist::die("Must be on dev branch to start new issue branch.")
+
+    issue_id = opts[:issue_id]
+    issue = select_issue{|i| i.id.start_with?(issue_id) && i.status == "open"}
+
+    system("git checkout -b #{issue.type}/#{issue.short_id}")
+  end
+
+#-------------------------------------------------------------------------------------------
+
+
+end
+
+
+#===========================================================================================
+# Command Line Parsing
+#===========================================================================================
+
+def get_issue_ids(num_ids, usage)
+  result = []
+  count = num_ids >= 0 ? num_ids : ARGV.count
+
+  begin
+    count.times do
+      ARGV.count > 0 && /^\h{1,32}$/ =~ ARGV[0] || raise
+      result << ARGV.shift
+    end
+
+    result.count == 1 && num_ids > 0 ? result[0] : result
+
+  rescue
+    abort("Usage: issues #{usage}")
+  end
+end
+
+#-------------------------------------------------------------------------------------------
+
+EXECUTABLE_NAME=File.basename($0)
+DATABASE_NAME= ".issues/" << EXECUTABLE_NAME << ".yaml"
+
+SUB_COMMANDS = {
+  "list"          => "list issues",
+  "count"         => "count issues",
+  "create"        => "create a new issue",
+  "resolve"       => "set status of issue to \"resolved\"",
+  "wontfix"       => "set status of issue to \"won't fix\"",
+  "cantreproduce" => "set status of issue to \"can't reproduce\"",
+  "duplicate"     => "mark issue as duplicate of another issue",
+  "edit"          => "edit an existing issue",
+  "delete"        => "delete an issue",
+  "estimate"      => "calculate estimated man-hours for a milestone",
+  "update"        => "update issue fields.",
+  "startbranch"   => "start a new git branch with to work on issue"}
+
+LeftFieldLength =
+  SUB_COMMANDS.collect { |key, value| key.length }.max
+
+SubCommandHelp =
+  SUB_COMMANDS.collect {|key,value| "  #{key.ljust(LeftFieldLength)}  #{value}"}.join("\n")
+
+
+global_opts = Optimist::options do
+  banner <<-EOL
+issues: lightweight distributed issue management.
+
+Usage:
+------
+issues [<command>] [<options] [<args>]
+
+Commands are:
+-------------
+#{SubCommandHelp}
+
+Global Options:
+---------------
+  EOL
+  stop_on SUB_COMMANDS.keys
+end
+
+
+cmd = ARGV.shift # get the subcommand
+cmd ||= 'list'
+
+cmd_opts = {}
+
+if cmd == 'list' || cmd == 'count'
+  cmd_opts =
+    Optimist::options do
+      opt :all,    "#{cmd} all issues",            :short => 'a'
+      opt :newest, "#{cmd} newest issues first" if cmd == 'list'
+      opt :oldest, "#{cmd} oldest issues first" if cmd == 'list'
+      opt :verbose, "verbose list of issues", :short => 'v' if cmd == 'list'
+      opt :type, "#{cmd} issues of given type (bug, improvement, task, feature)", :short => 't', :type => String
+      opt :milestone, "#{cmd} issues for given milestone", :short => 'm', :type => String
+      opt "no-milestone", "#{cmd} all issues not assigned to any milestone"
+    end
+
+    if cmd == 'list'
+      ARGV.count > 0 && cmd_opts[:issue_id] = get_issue_ids(1, "list ID")
+    end
+
+elsif cmd == "create"
+  cmd_opts =
+    Optimist::options do
+      opt :type, "create issue of specific type (e.g. bug, feature, improvement, task)", :short => 't', :type => String
+      opt :milestone, "specify the milestone of the new issue", :short => 'm', :type => String
+      opt :estimate, "specify the estimated effort", :short => 'e', :type => Float
+    end
+  cmd_opts[:title] = ARGV.shift || Optimist::die( "Please enter a title for the new issue!")
+
+
+elsif cmd == "resolve" || cmd == "wontfix" || cmd == "duplicate" || cmd == "cantreproduce"
+  cmd_opts =
+    Optimist::options do
+      opt :commit, "do a git commit", :short => 'c'
+    end
+
+  if cmd == "duplicate"
+    cmd_opts[:issue_id], cmd_opts[:duplicate_of_id] = get_issue_ids(2, "duplicate ID(issue) ID(duplicate of)")
+  elsif cmd == "resolve" && is_issue_branch()
+    cmd_opts[:issue_id] = git_get_current_branch().split('/')[1]
+    cmd_opts[:close_branch] = true
+    cmd_opts[:commit] = true
+  else
+    cmd_opts[:issue_id] = get_issue_ids(1, "#{cmd} [-c] ID")
+  end
+
+
+elsif cmd == "edit"
+  cmd_opts =
+    Optimist::options do
+      opt :description, "edit the issue description", :short => 'd'
+    end
+  cmd_opts[:issue_id] = get_issue_ids(1, "edit ID")
+
+elsif cmd == "estimate"
+  Optimist::options do
+    banner <<-EOL
+Usage:
+------
+issues estimate MILESTONE
+
+Options:
+--------
+EOL
+  end
+
+  ARGV.count > 0 || Optimist::die("Usage: issues estmiate MILSTONE")
+  cmd_opts[:milestone] = ARGV.shift
+
+elsif cmd == "update"
+  my_banner = <<-EOL
+Usage:
+------
+issues update \
+ [--type (bug|improvement|task|feature)]\
+ [--milestone MILESTONE]\
+ [--estimate ESTIMATE]\
+ ID{,ID2,...}
+
+Options:
+--------
+EOL
+
+  cmd_opts = Optimist::options do
+    banner my_banner
+    opt :type, "update the issue type", :short => 't', :type => String
+    opt :milestone, "update the milestone", :short => 'm', :type => String
+    opt :estimate,  "update the estimate", :short => 'e', :type => Float
+  end
+
+  cmd_opts[:type] && (%w{bug improvement task feature}.include?(cmd_opts[:type]) || Optimist::die("Please specify one of [bug, improvement, task, freature] as new issue type"))
+  cmd_opts[:type] || cmd_opts[:milestone] || cmd_opts[:estimate] || Optimist::die("You must specify one of (--type, --milestone, --estimate)")
+
+  ARGV.count > 0 && cmd_opts[:issue_ids] = get_issue_ids(-1, "set-type {bug|improvement|task|feature} ID")
+
+
+elsif cmd == "delete"
+  cmd_opts[:issue_ids] = get_issue_ids(-1, "#{cmd} ID")
+
+
+elsif cmd == "startbranch"
+  cmd_opts[:issue_id] = get_issue_ids(1, "list ID") || Optimist::die( "Please enter an id for the issue to work on in the new branch!")
+
+else
+  Optimist::die "unknown command #{cmd.inspect}"
+end
+
+
+cmd_opts[:cmd] = cmd
+
+
+#===========================================================================================
+# Main
+#===========================================================================================
+
+Issues = IssuesDb.new(DATABASE_NAME)
+cmd_opts[:list_estimate] = Issues.has_open_issues_with_estimate?()
+cmd_opts[:milestone_column_width] = Issues.milestone_column_width()
+cmd_opts[:list_milestone] = Issues.has_open_issues_with_milestone?()
+
+case cmd
+  when "create"
+    Issues.create_issue(cmd_opts)
+  when "list"
+    Issues.list_issues(cmd_opts)
+  when "count"
+    Issues.count_issues(cmd_opts)
+  when "resolve", "wontfix", "duplicate", "cantreproduce"
+    Issues.resolve_issues(cmd_opts)
+  when "edit"
+    Issues.edit_issue(cmd_opts)
+  when "estimate"
+    Issues.estimate(cmd_opts)
+  when "update"
+    Issues.update(cmd_opts)
+  when "delete"
+    Issues.delete_issues(cmd_opts)
+  when "startbranch"
+    Issues.start_branch(cmd_opts)
+end
+
+#===========================================================================================

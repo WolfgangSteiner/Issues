@@ -5,69 +5,83 @@
   status: resolved
   title: Implement resolve command.
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-16 16:15:10.418552000 +02:00
-  id: 085dcebdd6ccb2aea5c2102422485c1e
+  id: '085dcebdd6ccb2aea5c2102422485c1e'
   status: wontfix
   title: Base id on md5 of date + title.
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-16 16:52:51.886070000 +02:00
   id: bf58860ac07cac65d1cd085459a89880
   status: resolved
   title: Improve formatting of long titles.
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-16 16:54:02.413967000 +02:00
   id: efdc8d050c5137f32671fcbcbcf58d8a
   status: resolved
   title: Implement listing of selected issue types
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-16 16:54:17.971526000 +02:00
   id: 89df78ae571e97e8128c32e1c31133c4
   status: open
   title: Implement adding of todos to issue
   type: feature
+  milestone:
+  estimate:
 - !ruby/object:Issue
   created: 2012-05-16 16:55:01.914550000 +02:00
   id: b51b6c22af1e50be0d5d32c3666ef98e
   status: resolved
   title: Implement adding of description.
   type: improvement
-  description: ! 'This is my first description ever!
+  milestone:
+  description: 'This is my first description ever!
 
-'
+    '
 - !ruby/object:Issue
   created: 2012-05-16 16:55:26.625241000 +02:00
   id: adf8b59e50c2f477c335b8476d108fa7
   status: open
   title: Implement interactive creation of issues.
   type: feature
+  milestone:
+  estimate:
 - !ruby/object:Issue
   created: 2012-05-16 17:02:01.167166000 +02:00
   id: 6a7376e5baa704e0a214b86a36b6f65d
   status: open
   title: Implement sorting by newest, oldest
   type: feature
+  milestone:
+  estimate:
 - !ruby/object:Issue
   created: 2012-05-17 14:24:49.389268000 +02:00
   id: 81b9e30a9a1e7d5a4f813fb050735651
   status: resolved
   title: Add option --commit to resolve command.
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 16:47:23.460929000 +02:00
   id: 510ede0e13230035815cf40b00cdf3c3
   status: resolved
   title: Fix utf8 support
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 16:48:15.559977000 +02:00
   id: 7a2fd1be5ed77fdfe07dddf5a38cdde8
   status: resolved
   title: Implement delete issue command
   type: improvement
+  milestone:
   history:
   - !ruby/object:LogEntry
     date: 2012-06-05 16:19:31.043125000 +02:00
@@ -78,54 +92,65 @@
   status: resolved
   title: Implement update type command
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:39:31.657665000 +02:00
   id: 9e0ad75839678ada0e8e6c3fd28327e7
   status: resolved
   title: Fix editing of whole issues.
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:40:06.157956000 +02:00
   id: d10ef9318a65766b4968ba5b7b4e1e64
   status: resolved
   title: Implement listing of a single issue.
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:40:34.505065000 +02:00
   id: ca324bc98157f74ab3b86a73fab8494c
   status: wontfix
   title: Implement of wontfix
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:45:04.495833000 +02:00
   id: affeee54f97acf2cf5cbd25ce20365c9
   status: resolved
   title: List issue type in short list
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:55:19.192591000 +02:00
   id: 1f575e9c614ba00e28fbac0bdbc801ac
   status: open
   title: Implement priorities
   type: feature
+  milestone:
+  estimate:
 - !ruby/object:Issue
   created: 2012-05-17 19:57:19.996550000 +02:00
   id: fcacc96ed5ed3926a874ef3f86d7b6af
   status: resolved
   title: Implement guessing of issue type
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-05-17 19:58:31.561250000 +02:00
   id: 0051cad4deea412629d5df10b55f3287
   status: open
   title: Implement entering description on command line.
   type: feature
+  milestone:
+  estimate:
 - !ruby/object:Issue
   created: 2012-05-18 11:09:39.726717000 +02:00
   id: 198a5f571051f0db745277c4bee4f793
   status: resolved
   title: Implement history
   type: improvement
+  milestone:
   history:
   - !ruby/object:LogEntry
     date: 2012-06-05 15:40:30.678035000 +02:00
@@ -136,33 +161,38 @@
   status: duplicate(d10ef9318a65766b4968ba5b7b4e1e64)
   title: Implement listing of specific issue.
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-06-02 20:05:15.134548000 +02:00
   id: 19b059c70f65021b16ad3d0cdde96204
   status: wontfix
   title: This is just a test.
   type: bug
-  description: ! 'This is a test description.
+  milestone:
+  description: 'This is a test description.
 
-'
+    '
 - !ruby/object:Issue
   created: 2012-06-04 20:54:09.070692000 +02:00
   id: 8c9e57c63527c48a85465c9aeb54f96f
   status: resolved
   title: Fix resolving of issues
   type: bug
+  milestone:
 - !ruby/object:Issue
   created: 2012-06-04 21:05:49.080853000 +02:00
   id: 8352ac051ea1c3bcd4db262b3ae2f5d4
   status: resolved
   title: Implement duplicate
   type: improvement
+  milestone:
 - !ruby/object:Issue
   created: 2012-06-05 10:18:53.784959000 +02:00
   id: 873479cd26be00627709a85891507deb
   status: wontfix
   title: Add modifcation date to issues.
   type: improvement
+  milestone:
   history:
   - !ruby/object:LogEntry
     date: 2012-06-05 11:40:55.366839000 +02:00
@@ -173,6 +203,8 @@
   status: open
   title: Implement tags
   type: feature
+  milestone:
+  estimate:
   history:
   - !ruby/object:LogEntry
     date: 2012-08-21 17:49:10.724440000 +02:00
@@ -183,6 +215,8 @@
   status: open
   title: allow multiple issues to be resolved at once
   type: improvement
+  milestone:
+  estimate:
   history:
   - !ruby/object:LogEntry
     date: 2012-08-24 14:18:45.491559000 +02:00
@@ -193,6 +227,8 @@
   status: open
   title: add commit option to issues create
   type: improvement
+  milestone:
+  estimate:
   history:
   - !ruby/object:LogEntry
     date: 2012-08-24 14:19:33.638521000 +02:00
@@ -203,6 +239,8 @@
   status: resolved
   title: Implement startbranch command
   type: feature
+  milestone:
+  estimate:
   history:
   - !ruby/object:LogEntry
     date: 2012-10-27 10:35:24.141573000 +02:00
@@ -213,5 +251,3 @@
   - !ruby/object:LogEntry
     date: 2012-10-27 11:56:33.648398000 +02:00
     message: Changed status to resolved
-  milestone: 
-  estimate: 
